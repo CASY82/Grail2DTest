@@ -1,3 +1,5 @@
+import { centerOf } from '../domain/Geometry.js';
+import { metersToPixels } from '../domain/Scale.js';
 export class CanvasRenderer {
     canvas;
     assets;
@@ -41,23 +43,68 @@ export class CanvasRenderer {
     }
     drawWorld(frame) {
         const c = this.ctx;
-        for (const d of frame.area.decorations) {
-            c.globalAlpha = d.alpha ?? 1;
-            c.fillStyle = d.fallback;
-            c.fillRect(d.rect.x, d.rect.y, d.rect.w, d.rect.h);
-            c.globalAlpha = 1;
-        }
+        // Concept art carries the scenery. Prototype fallback rectangles are debug-only.
+        if (frame.debug)
+            for (const d of frame.area.decorations) {
+                c.save();
+                c.globalAlpha = d.alpha ?? .7;
+                c.strokeStyle = d.fallback;
+                c.setLineDash([4, 5]);
+                c.strokeRect(d.rect.x, d.rect.y, d.rect.w, d.rect.h);
+                c.restore();
+            }
         for (const p of frame.area.portals) {
+            const blocked = frame.blockedPortalIds.includes(p.id);
+            const center = centerOf(p.rect);
             c.save();
-            c.strokeStyle = 'rgba(102,166,150,.38)';
-            c.setLineDash([6, 7]);
-            c.strokeRect(p.rect.x, p.rect.y, p.rect.w, p.rect.h);
+            const color = blocked ? 'rgba(238,137,123,.94)' : 'rgba(144,235,208,.94)';
+            c.strokeStyle = color;
+            c.fillStyle = color;
+            c.lineWidth = 2;
+            c.textAlign = 'center';
+            c.font = '600 15px system-ui';
+            // Small floor chevrons communicate direction without covering the artwork.
+            c.beginPath();
+            c.moveTo(center.x - 18, center.y - 6);
+            c.lineTo(center.x, center.y + 7);
+            c.lineTo(center.x + 18, center.y - 6);
+            c.stroke();
+            c.globalAlpha = .48;
+            c.beginPath();
+            c.moveTo(center.x - 13, center.y - 16);
+            c.lineTo(center.x, center.y - 7);
+            c.lineTo(center.x + 13, center.y - 16);
+            c.stroke();
+            c.globalAlpha = 1;
+            c.fillText(`${blocked ? '🔒' : '➜'} ${p.label}`, center.x, Math.max(28, p.rect.y - 10));
+            c.textAlign = 'left';
+            if (frame.debug) {
+                c.globalAlpha = .55;
+                c.setLineDash([7, 5]);
+                c.strokeRect(p.rect.x, p.rect.y, p.rect.w, p.rect.h);
+            }
             c.restore();
         }
         for (const i of frame.area.interactions) {
+            if (!frame.visibleInteractionIds.includes(i.id))
+                continue;
             c.save();
-            c.fillStyle = 'rgba(185,162,112,.14)';
-            c.fillRect(i.rect.x, i.rect.y, i.rect.w, i.rect.h);
+            c.strokeStyle = 'rgba(229,205,144,.82)';
+            c.lineWidth = 2;
+            const { x, y, w, h } = i.rect;
+            const arm = Math.min(14, w / 4, h / 4);
+            for (const [sx, sy, dx, dy] of [[x, y, 1, 1], [x + w, y, -1, 1], [x, y + h, 1, -1], [x + w, y + h, -1, -1]]) {
+                c.beginPath();
+                c.moveTo(sx + dx * arm, sy);
+                c.lineTo(sx, sy);
+                c.lineTo(sx, sy + dy * arm);
+                c.stroke();
+            }
+            if (frame.debug) {
+                c.globalAlpha = .45;
+                c.setLineDash([3, 5]);
+                c.strokeRect(x, y, w, h);
+            }
             c.restore();
         }
         if (frame.debug) {
@@ -80,7 +127,7 @@ export class CanvasRenderer {
             c.fillRect(p.position.x - 10, p.position.y + 4, 20, 22);
         }
         if (frame.debug && p.noiseRadiusMeters > 0) {
-            const radius = p.noiseRadiusMeters * 8;
+            const radius = metersToPixels(p.noiseRadiusMeters);
             c.strokeStyle = 'rgba(120,200,180,.45)';
             c.beginPath();
             c.arc(p.position.x, p.position.y, radius, 0, Math.PI * 2);
@@ -150,7 +197,7 @@ export class CanvasRenderer {
         c.fillRect(22, 640, 1236, 55);
         c.fillStyle = '#aab4b0';
         c.font = '13px system-ui';
-        c.fillText('WASD 이동 · Shift 달리기 · Ctrl 앉기 · E 조사 · F 등잔 · ` 디버그', 40, 664);
+        c.fillText('WASD 이동 · Shift 달리기(토글) · Ctrl 앉기 · E 조사 · F 등잔 · ` 디버그', 40, 664);
         c.fillStyle = frame.noiseRadiusMeters >= 14 ? '#e6a18f' : '#86b9ad';
         c.fillText(`소음 ${frame.noiseRadiusMeters}m`, 40, 686);
         c.fillStyle = '#9aa6a2';

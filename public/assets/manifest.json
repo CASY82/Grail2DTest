@@ -1,16 +1,17 @@
 {
   "images": {
-    "character.lucas": "./public/assets/characters/lucas.svg",
-    "enemy.hollow": "./public/assets/characters/hollow.svg",
-    "bg.bridge": "./public/assets/environment/bridge.svg",
-    "bg.forest": "./public/assets/environment/forest.svg",
-    "bg.cabinA": "./public/assets/environment/cabin-a.svg",
-    "bg.gate": "./public/assets/environment/gate.svg",
-    "bg.logging": "./public/assets/environment/logging-road.svg",
-    "bg.cabinB1": "./public/assets/environment/cabin-b1.svg",
-    "bg.cabinB2": "./public/assets/environment/cabin-b2.svg",
-    "bg.attic": "./public/assets/environment/attic.svg",
-    "bg.chase": "./public/assets/environment/chase.svg",
-    "bg.ending": "./public/assets/environment/ending.svg"
+    "character.lucas": "./public/assets/characters/generated/lucas-topdown-v1.png",
+    "enemy.hollow": "./public/assets/characters/generated/hollow-topdown-v1.png",
+    "bg.bridge": "./public/assets/environment/generated/collapsed-bridge-v1.png",
+    "bg.forest": "./public/assets/environment/generated/forest-wolf-eyes-v1.png",
+    "bg.cabinA": "./public/assets/environment/generated/cabin-a-first-visit-v1.png",
+    "bg.cabinA.visited": "./public/assets/environment/generated/cabin-a-revisited-v2.png",
+    "bg.gate": "./public/assets/environment/generated/north-gate-v1.png",
+    "bg.logging": "./public/assets/environment/generated/logging-road-manager-building-v1.png",
+    "bg.cabinB1": "./public/assets/environment/generated/cabin-b1-v1.png",
+    "bg.cabinB2": "./public/assets/environment/generated/cabin-b2-v1.png",
+    "bg.attic": "./public/assets/environment/generated/attic-v1.png",
+    "bg.chase": "./public/assets/environment/generated/chase-road-v1.png",
+    "bg.ending": "./public/assets/environment/generated/ashvale-reveal-v1.png"
   }
 }

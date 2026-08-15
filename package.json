@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "node server.mjs",
     "build": "tsc -p tsconfig.json",
-    "check": "tsc -p tsconfig.json --noEmit"
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "npm run build && node --test tests/ && node tests/smoke.mjs"
   },
   "devDependencies": {
     "typescript": "^5.8.3"

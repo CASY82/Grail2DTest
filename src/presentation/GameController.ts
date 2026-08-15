@@ -4,23 +4,25 @@ import { Hollow } from '../domain/Hollow.js';
 import { Player } from '../domain/Player.js';
 import type { InteractionDefinition, PortalDefinition, WorldDefinition } from '../domain/World.js';
 import { Chapter1FlowService } from '../application/Chapter1FlowService.js';
-import { ChaseService } from '../application/ChaseService.js';
 import { MovementService } from '../application/MovementService.js';
+import { ShadowPuzzleService } from '../application/ShadowPuzzleService.js';
 import { SaveGameService } from '../application/SaveGameService.js';
 import type { AssetProvider, AudioPort, InputPort, ModalPort, RendererPort } from '../application/ports/Ports.js';
 
 export class GameController {
+  private static readonly SIGHTING_SECONDS=2.4;
   private readonly progress=new Chapter1Progress();
   private readonly player=new Player({x:180,y:520});
   private readonly hollow=new Hollow();
   private readonly flow=new Chapter1FlowService(this.progress);
   private readonly movement=new MovementService();
-  private readonly chase=new ChaseService();
+  private readonly shadowPuzzle=new ShadowPuzzleService();
   private readonly saves:SaveGameService;
   private areaId:AreaId='bridge';
   private previousTime=performance.now();
   private busy=false;
   private portalCooldown=0;
+  private sightingTimer=0;
   private debug=false;
 
   constructor(
@@ -45,6 +47,10 @@ export class GameController {
 
   private update(dt:number):void{
     this.portalCooldown=Math.max(0,this.portalCooldown-dt);
+    if(this.hollow.active){
+      this.sightingTimer=Math.max(0,this.sightingTimer-dt);
+      if(this.sightingTimer<=0) this.hollow.active=false;
+    }
     const state=this.input.poll();
     if(state.escapePressed) void this.pauseInfo();
     if(state.debugPressed) this.debug=!this.debug;
@@ -52,22 +58,25 @@ export class GameController {
     this.movement.update(this.player,this.currentArea(),state,dt);
     this.handlePortal();
     if(state.interactPressed) void this.handleInteraction();
-    if(this.areaId==='chaseRoad'){
-      this.hollow.active=true;
-      if(this.chase.update(this.hollow,this.player,dt)) void this.onCaught();
-    }
   }
 
   private render():void{
+    const area=this.currentArea();
     const interaction=this.nearestInteraction(); const portal=this.nearestPortal();
-    const prompt=interaction?.label ?? portal?.label;
+    const blockedPortalIds=area.portals.filter(p=>p.requireFlag && !this.progress.has(p.requireFlag)).map(p=>p.id);
+    const prompt=interaction?.label ?? (portal ? `${blockedPortalIds.includes(portal.id)?'잠김 · ':''}${portal.label}` : undefined);
+    const visibleInteractionIds=area.interactions.filter(i=>this.interactionVisible(i)).map(i=>i.id);
     this.renderer.render({
-      area:this.currentArea(), player:this.player, hollow:this.hollow, objective:this.progress.objective(),
-      ...(prompt ? {prompt} : {}), noiseRadiusMeters:this.player.noiseRadiusMeters, inventoryText:this.inventoryText(), debug:this.debug
+      area, player:this.player, hollow:this.hollow, objective:this.progress.objective(),
+      ...(prompt ? {prompt} : {}), noiseRadiusMeters:this.player.noiseRadiusMeters, inventoryText:this.inventoryText(), blockedPortalIds, visibleInteractionIds, debug:this.debug
     });
   }
 
-  private currentArea(){ return this.world.areas[this.areaId]; }
+  private currentArea(){
+    const base=this.world.areas[this.areaId];
+    if(this.areaId!=='cabinA' || !this.progress.has('gateChecked')) return base;
+    return { ...base, backgroundAssetId:'bg.cabinA.visited', subtitle:'재방문 · 젖은 발자국과 열린 관리 기록', decorations:[...base.decorations,{rect:{x:575,y:475,w:130,h:18},fallback:'#151918',alpha:.72},{rect:{x:760,y:330,w:42,h:18},fallback:'#4b3a30',alpha:.8}] };
+  }
 
   private handlePortal():void{
     if(this.portalCooldown>0) return;
@@ -100,32 +109,47 @@ export class GameController {
     try{
       const result=this.flow.interact(interaction.action); await this.modal.showMessage(result.title,result.body); this.input.clearPressed();
       if(result.openPuzzle){
-        const solved=await this.modal.showShadowPuzzle();
-        if(solved){ this.flow.solvePuzzle(); this.audio.pulse('success'); await this.modal.showMessage('봉인 완성','세 그림자가 하나로 겹치자 서랍이 열린다. 녹슨 관문 열쇠, 경고 쪽지, △ 진실 조각을 획득했다.'); this.input.clearPressed(); this.saves.save(this.areaId,this.player,this.progress); }
+        const solved=await this.modal.showShadowPuzzle({
+          align:input=>this.shadowPuzzle.align(input),
+          attempt:input=>this.shadowPuzzle.attempt(input),
+          hintAvailable:this.progress.has('mechanismExamined'),
+          mirrorTarget:ShadowPuzzleService.ANSWER.mirrorAngle,
+          candleTarget:ShadowPuzzleService.ANSWER.candleAngle,
+          onFeedback:feedback=>{
+            if(feedback.event==='threat-approaches'){ this.audio.pulse('error'); this.audio.pulse('step'); }
+            else if(!feedback.solved) this.audio.pulse('error');
+          }
+        });
+        if(solved){
+          this.flow.solvePuzzle(); this.audio.pulse('success');
+          await this.modal.showMessage('봉인이 맞물리다','세 그림자가 겹치는 순간, 다락 전체가 숨을 멈춘 듯 조용해진다. 받침대 안쪽에서 나무가 갈리는 소리가 낮게 울린다.');
+          this.input.clearPressed();
+          await this.modal.showMessage('열린 서랍','서랍이 열린다. 녹슨 관문 열쇠, 경고 쪽지, △ 진실 조각을 획득했다.');
+          this.input.clearPressed(); this.saves.save(this.areaId,this.player,this.progress);
+        }
       }
-      if(result.startChase){ this.enterArea('chaseRoad',{x:100,y:360},false); this.hollow.position={x:45,y:360}; this.hollow.active=true; this.audio.pulse('hollow'); this.saves.save(this.areaId,this.player,this.progress); }
+      if(result.sighting){ this.triggerSighting(); this.saves.save(this.areaId,this.player,this.progress); }
       if(result.complete){
         this.progress.set('chapterComplete'); this.hollow.active=false; this.enterArea('ending',{x:640,y:360},false); this.saves.save(this.areaId,this.player,this.progress); await this.modal.showEnding(); this.input.clearPressed();
       } else if(result.autosave) this.saves.save(this.areaId,this.player,this.progress);
     }finally{this.busy=false;}
   }
 
-  private async onCaught():Promise<void>{
-    if(this.busy) return; this.busy=true; this.hollow.active=false; this.audio.pulse('error');
-    await this.modal.showMessage('붙잡혔다','차가운 손이 어깨를 움켜쥔다. 추격 구간 시작점에서 다시 시도한다.'); this.input.clearPressed();
-    this.player.position={x:100,y:360}; this.hollow.position={x:45,y:360}; this.hollow.active=true; this.busy=false;
+  private triggerSighting():void{
+    // Scripted glimpse near the attic window (rect x:900,y:180,w:120,h:130) — Hollow never tracks the player.
+    this.hollow.position={x:960,y:230}; this.hollow.active=true; this.sightingTimer=GameController.SIGHTING_SECONDS;
+    this.audio.pulse('hollow');
   }
 
   private enterArea(target:AreaId,spawn:{x:number;y:number},autosave:boolean):void{
     this.areaId=target; this.player.position={...spawn}; this.audio.setAmbience(this.currentArea().ambience);
-    if(target!=='chaseRoad') this.hollow.active=false;
+    this.hollow.active=false;
     if(autosave && ['cabinB1','cabinB2','attic'].includes(target)) this.saves.save(this.areaId,this.player,this.progress);
   }
 
   private restore(snapshot:Chapter1Snapshot):void{
     this.areaId=snapshot.areaId; this.player.position={x:snapshot.playerX,y:snapshot.playerY}; this.player.lanternOn=snapshot.lanternOn;
     snapshot.flags.forEach(f=>this.progress.set(f)); snapshot.items.forEach(i=>this.progress.addItem(i));
-    if(this.areaId==='chaseRoad'){this.hollow.active=true;this.hollow.position={x:45,y:360};}
   }
 
   private inventoryText():string{

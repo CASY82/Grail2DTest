@@ -3,6 +3,7 @@ import type { InputPort, InputState } from '../application/ports/Ports.js';
 export class BrowserInput implements InputPort {
   private readonly down = new Set<string>();
   private readonly pressed = new Set<string>();
+  private runToggled = false;
 
   constructor() {
     window.addEventListener('keydown', (e) => {
@@ -15,9 +16,13 @@ export class BrowserInput implements InputPort {
   }
 
   poll(): InputState {
+    // Shift toggles the run state on press rather than requiring it to be held.
+    const leftShiftPressed = this.take('ShiftLeft');
+    const rightShiftPressed = this.take('ShiftRight');
+    if (leftShiftPressed || rightShiftPressed) this.runToggled = !this.runToggled;
     const result: InputState = {
       up:this.isDown('KeyW','ArrowUp'), down:this.isDown('KeyS','ArrowDown'), left:this.isDown('KeyA','ArrowLeft'), right:this.isDown('KeyD','ArrowRight'),
-      run:this.down.has('ShiftLeft') || this.down.has('ShiftRight'), crouch:this.down.has('ControlLeft') || this.down.has('ControlRight'),
+      run:this.runToggled, crouch:this.down.has('ControlLeft') || this.down.has('ControlRight'),
       interactPressed:this.take('KeyE') || this.take('Enter'), lanternPressed:this.take('KeyF'), escapePressed:this.take('Escape'), debugPressed:this.take('Backquote')
     };
     return result;

@@ -11,10 +11,11 @@ GRAIL의 기존 3D 레벨디자인을 **2D top-down survival horror**로 옮긴 
 - 첫 오두막 재방문 / 관리 기록
 - 옛 벌목로
 - 둘째 오두막 1F / 2F / 다락
-- △ ○ ✠ 목판화 수집
-- 그림자 교차 퍼즐
-- 녹슨 관문 열쇠 + △ 진실 조각 획득
-- Hollow 강제 추격
+- △ ○ ✠ 목판화 수집 (환경 스토리텔링 텍스트 포함) + 선택적 일기 단서(`cabinB1.diary`)
+- 받침대 눈금 조사(`attic.mechanism`)로 얻는 각도 힌트(디제틱, 45°/30° 눈금이 닳아 있음)
+- 그림자 봉인 퍼즐 — 손잡이를 돌리는 즉시 SVG 다이얼과 겹침 %/온도어로 실시간 피드백, 맹목적 추측 없음
+- 녹슨 관문 열쇠 + △ 진실 조각 획득 (2단계 연출: 봉인이 맞물리는 소리 → 서랍이 열림)
+- Hollow 목격 연출(사운드 + 짧은 스침, 추격 없음)
 - 북쪽 관문 개방 / Chapter 1 종료
 - 걷기 / 달리기 / 앉기별 소음 반경
 - 등잔 ON/OFF와 시야 변화
@@ -55,7 +56,7 @@ npm run dev
 | 키 | 기능 |
 |---|---|
 | W/A/S/D | 이동 |
-| Shift | 달리기 |
+| Shift | 달리기 토글(한 번 누르면 유지, 다시 누르면 해제) |
 | Ctrl | 앉아서 이동 |
 | E | 조사 / 상호작용 |
 | F | 등잔 ON/OFF |
@@ -76,7 +77,6 @@ src/
 ├─ application/            # Use Case / 게임 서비스
 │  ├─ Chapter1FlowService.ts
 │  ├─ MovementService.ts
-│  ├─ ChaseService.ts
 │  ├─ SaveGameService.ts
 │  └─ ports/Ports.ts       # Renderer/Input/Save/Asset/Audio/Modal 추상화
 │
@@ -187,6 +187,8 @@ atticOpened
   ↓
 atticClueSeen
   ↓
+(mechanismExamined — 선택, 각도 힌트 조사 여부)
+  ↓
 woodcutTriangle / Circle / Cross
   ↓
 puzzleSolved
@@ -211,18 +213,17 @@ node tests/smoke.mjs
 - Portal 이동 직후 다른 Portal이 즉시 재발동하지 않는지
 - CH1 필수 진행 플래그가 순서대로 동작하는지
 - △ ○ ✠ 수집 및 퍼즐 보상
-- Hollow 추격 플래그
+- Hollow 목격(sighting) 플래그
 - 열쇠 획득 후 북쪽 관문 완료
 
 ## 다음 확장 우선순위
 
 1. 실제 컨셉아트 기반 배경/캐릭터 스프라이트 교체
 2. Tiled 기반 레벨 에디팅 Adapter
-3. 실제 A* / steering 기반 Hollow AI
-4. 장애물 기반 시야(Line-of-Sight)
-5. 등잔 피탐지 증가
-6. 정신력 시스템
-7. 애니메이션 State Machine
-8. 사운드 에셋 Manifest / spatial audio
-9. Gamepad / 모바일 입력 Adapter
-10. Chapter 2 Safe Hub + Spoke 구조
+3. 장애물 기반 시야(Line-of-Sight)
+4. 등잔 피탐지 증가
+5. 정신력 시스템
+6. 애니메이션 State Machine
+7. 사운드 에셋 Manifest / spatial audio
+8. Gamepad / 모바일 입력 Adapter
+9. Chapter 2 Safe Hub + Spoke 구조

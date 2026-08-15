@@ -4,7 +4,9 @@ export type AreaId =
 
 export type ProgressFlag =
   | 'bridgeObserved' | 'cabinVisited' | 'gateChecked' | 'routeKnown'
-  | 'atticOpened' | 'atticClueSeen' | 'puzzleSolved' | 'chaseStarted' | 'chapterComplete';
+  | 'fenceExamined' | 'oakExamined' | 'creekExamined' | 'cartExamined'
+  | 'atticOpened' | 'atticClueSeen' | 'mechanismExamined' | 'puzzleSolved' | 'chaseStarted' | 'chapterComplete'
+  | 'markedTreeSeen' | 'puddleTracksSeen' | 'forestEyesSeen';
 
 export type ItemId = 'woodcutTriangle' | 'woodcutCircle' | 'woodcutCross' | 'rustedGateKey' | 'truthTriangle';
 
@@ -32,7 +34,7 @@ export class Chapter1Progress {
 
   objective(): string {
     if (this.has('chapterComplete')) return 'CHAPTER 1 COMPLETE';
-    if (this.has('chaseStarted')) return 'Hollow에게 붙잡히지 말고 북쪽 관문까지 달려라.';
+    if (this.has('chaseStarted')) return '다시 북쪽 관문으로 향하라.';
     if (this.has('puzzleSolved')) return '창밖의 인기척을 확인하라.';
     if (this.hasAllWoodcuts()) return '다락으로 돌아가 △ ○ ✠ 그림자 봉인을 완성하라.';
     if (this.has('atticClueSeen')) return '1층 세 방에서 △ ○ ✠ 목판화를 찾아라.';

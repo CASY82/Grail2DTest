@@ -1,5 +1,6 @@
 import type { AssetProvider, RenderFrame, RendererPort } from '../application/ports/Ports.js';
 import { centerOf } from '../domain/Geometry.js';
+import { metersToPixels } from '../domain/Scale.js';
 
 export class CanvasRenderer implements RendererPort {
   private readonly ctx: CanvasRenderingContext2D;
@@ -34,12 +35,31 @@ export class CanvasRenderer implements RendererPort {
 
   private drawWorld(frame: RenderFrame): void {
     const c=this.ctx;
-    for (const d of frame.area.decorations) { c.globalAlpha=d.alpha ?? 1; c.fillStyle=d.fallback; c.fillRect(d.rect.x,d.rect.y,d.rect.w,d.rect.h); c.globalAlpha=1; }
+    // Concept art carries the scenery. Prototype fallback rectangles are debug-only.
+    if(frame.debug) for (const d of frame.area.decorations) {
+      c.save(); c.globalAlpha=d.alpha ?? .7; c.strokeStyle=d.fallback; c.setLineDash([4,5]); c.strokeRect(d.rect.x,d.rect.y,d.rect.w,d.rect.h); c.restore();
+    }
     for (const p of frame.area.portals) {
-      c.save(); c.strokeStyle='rgba(102,166,150,.38)'; c.setLineDash([6,7]); c.strokeRect(p.rect.x,p.rect.y,p.rect.w,p.rect.h); c.restore();
+      const blocked=frame.blockedPortalIds.includes(p.id); const center=centerOf(p.rect);
+      c.save();
+      const color=blocked?'rgba(238,137,123,.94)':'rgba(144,235,208,.94)';
+      c.strokeStyle=color; c.fillStyle=color; c.lineWidth=2; c.textAlign='center'; c.font='600 15px system-ui';
+      // Small floor chevrons communicate direction without covering the artwork.
+      c.beginPath(); c.moveTo(center.x-18,center.y-6); c.lineTo(center.x,center.y+7); c.lineTo(center.x+18,center.y-6); c.stroke();
+      c.globalAlpha=.48; c.beginPath(); c.moveTo(center.x-13,center.y-16); c.lineTo(center.x,center.y-7); c.lineTo(center.x+13,center.y-16); c.stroke(); c.globalAlpha=1;
+      c.fillText(`${blocked?'🔒':'➜'} ${p.label}`,center.x,Math.max(28,p.rect.y-10)); c.textAlign='left';
+      if(frame.debug){ c.globalAlpha=.55; c.setLineDash([7,5]); c.strokeRect(p.rect.x,p.rect.y,p.rect.w,p.rect.h); }
+      c.restore();
     }
     for (const i of frame.area.interactions) {
-      c.save(); c.fillStyle='rgba(185,162,112,.14)'; c.fillRect(i.rect.x,i.rect.y,i.rect.w,i.rect.h); c.restore();
+      if(!frame.visibleInteractionIds.includes(i.id)) continue;
+      c.save(); c.strokeStyle='rgba(229,205,144,.82)'; c.lineWidth=2;
+      const {x,y,w,h}=i.rect; const arm=Math.min(14,w/4,h/4);
+      for(const [sx,sy,dx,dy] of [[x,y,1,1],[x+w,y,-1,1],[x,y+h,1,-1],[x+w,y+h,-1,-1]] as const){
+        c.beginPath(); c.moveTo(sx+dx*arm,sy); c.lineTo(sx,sy); c.lineTo(sx,sy+dy*arm); c.stroke();
+      }
+      if(frame.debug){ c.globalAlpha=.45; c.setLineDash([3,5]); c.strokeRect(x,y,w,h); }
+      c.restore();
     }
     if (frame.debug) { c.strokeStyle='rgba(255,80,80,.7)'; for (const w of frame.area.walls) c.strokeRect(w.x,w.y,w.w,w.h); }
   }
@@ -48,7 +68,7 @@ export class CanvasRenderer implements RendererPort {
     const c=this.ctx; const p=frame.player; const image=this.assets.getImage('character.lucas');
     if (image) c.drawImage(image,p.position.x-22,p.position.y-30,44,60);
     else { c.fillStyle='#c7c0ad'; c.beginPath(); c.arc(p.position.x,p.position.y-7,12,0,Math.PI*2); c.fill(); c.fillRect(p.position.x-10,p.position.y+4,20,22); }
-    if (frame.debug && p.noiseRadiusMeters>0) { const radius=p.noiseRadiusMeters*8; c.strokeStyle='rgba(120,200,180,.45)'; c.beginPath(); c.arc(p.position.x,p.position.y,radius,0,Math.PI*2); c.stroke(); }
+    if (frame.debug && p.noiseRadiusMeters>0) { const radius=metersToPixels(p.noiseRadiusMeters); c.strokeStyle='rgba(120,200,180,.45)'; c.beginPath(); c.arc(p.position.x,p.position.y,radius,0,Math.PI*2); c.stroke(); }
   }
 
   private drawHollow(frame: RenderFrame): void {
@@ -79,7 +99,7 @@ export class CanvasRenderer implements RendererPort {
     c.fillStyle='#e4e7e4'; c.font='600 17px system-ui'; c.fillText(frame.area.title,40,48); c.fillStyle='#879691'; c.font='13px system-ui'; c.fillText(frame.area.subtitle,40,70);
     c.fillStyle='#cdd4d0'; c.font='14px system-ui'; this.wrapText(`목표: ${frame.objective}`,40,96,520,19);
     c.fillStyle='rgba(5,8,8,.72)'; c.fillRect(22,640,1236,55); c.fillStyle='#aab4b0'; c.font='13px system-ui';
-    c.fillText('WASD 이동 · Shift 달리기 · Ctrl 앉기 · E 조사 · F 등잔 · ` 디버그',40,664);
+    c.fillText('WASD 이동 · Shift 달리기(토글) · Ctrl 앉기 · E 조사 · F 등잔 · ` 디버그',40,664);
     c.fillStyle=frame.noiseRadiusMeters>=14?'#e6a18f':'#86b9ad'; c.fillText(`소음 ${frame.noiseRadiusMeters}m`,40,686); c.fillStyle='#9aa6a2'; c.fillText(frame.inventoryText,160,686);
     if (frame.prompt) { const w=Math.min(640,c.measureText(frame.prompt).width+46); c.fillStyle='rgba(0,0,0,.78)'; c.fillRect(640-w/2,565,w,42); c.fillStyle='#e8ece9'; c.textAlign='center'; c.fillText(`[E] ${frame.prompt}`,640,591); c.textAlign='left'; }
     c.restore();

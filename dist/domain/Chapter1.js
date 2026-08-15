@@ -12,7 +12,7 @@ export class Chapter1Progress {
         if (this.has('chapterComplete'))
             return 'CHAPTER 1 COMPLETE';
         if (this.has('chaseStarted'))
-            return 'Hollow에게 붙잡히지 말고 북쪽 관문까지 달려라.';
+            return '다시 북쪽 관문으로 향하라.';
         if (this.has('puzzleSolved'))
             return '창밖의 인기척을 확인하라.';
         if (this.hasAllWoodcuts())
