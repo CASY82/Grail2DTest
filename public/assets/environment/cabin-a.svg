@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#171513"/><stop offset="1" stop-color="#342a22"/></linearGradient><filter id="n"><feTurbulence baseFrequency=".65" numOctaves="3" stitchTiles="stitch"/><feColorMatrix values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 .08 0"/></filter></defs>
+<rect width="1280" height="720" fill="url(#g)"/><rect width="1280" height="720" filter="url(#n)" opacity=".3"/>
+<text x="640" y="72" fill="#87958f" opacity=".32" font-family="serif" font-size="22" text-anchor="middle" letter-spacing="8">FIRST CABIN</text>
+</svg>
