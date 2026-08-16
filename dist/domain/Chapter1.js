@@ -18,7 +18,7 @@ export class Chapter1Progress {
         if (this.hasAllWoodcuts())
             return '다락으로 돌아가 △ ○ ✠ 그림자 봉인을 완성하라.';
         if (this.has('atticClueSeen'))
-            return '1층 세 방에서 △ ○ ✠ 목판화를 찾아라.';
+            return '건물 곳곳에서 △ ○ ✠ 목판화를 찾아라.';
         if (this.has('routeKnown'))
             return '옛 벌목로의 랜드마크를 따라 둘째 오두막으로 이동하라.';
         if (this.has('gateChecked'))

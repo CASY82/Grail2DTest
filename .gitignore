@@ -1,3 +1,7 @@
+# Local backups of superseded generated artwork.
+public/assets/backups/
+
+# Local dependency installation.
 node_modules/
 npm-debug.log*
 .DS_Store

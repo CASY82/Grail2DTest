@@ -61,7 +61,7 @@ export const chapter1World = {
             walls: [...borderWalls(), { x: 250, y: 0, w: 70, h: 250 }, { x: 410, y: 0, w: 180, h: 270 }, { x: 610, y: 0, w: 150, h: 400 }, { x: 600, y: 490, w: 170, h: 230 }, { x: 760, y: 0, w: 70, h: 290 }, { x: 980, y: 390, w: 80, h: 330 }],
             portals: [
                 { id: 'logging.back', rect: { x: 20, y: 300, w: 70, h: 120 }, target: 'forest', spawn: { x: 1080, y: 610 }, label: '첫 오두막 방향' },
-                { id: 'logging.toB1', rect: { x: 1170, y: 290, w: 80, h: 140 }, target: 'cabinB1', spawn: { x: 640, y: 520 }, label: '둘째 오두막' }
+                { id: 'logging.toB1', rect: { x: 1170, y: 290, w: 80, h: 140 }, target: 'cabinB1Hall', spawn: { x: 640, y: 520 }, label: '북쪽 벌목장 관리동' }
             ],
             // Landmarks pay off the cabin.record clue ("울타리 → 벼락 참나무 → 얕은 개울 → 수레길") —
             // optional, single-fire, no gate. Positions checked against the generated background art.
@@ -75,29 +75,88 @@ export const chapter1World = {
                 { rect: { x: 350, y: 80, w: 120, h: 160 }, fallback: '#2b2118' }, { rect: { x: 610, y: 480, w: 180, h: 25 }, fallback: '#39514e' }, { rect: { x: 880, y: 120, w: 190, h: 50 }, fallback: '#403c32' }
             ]
         }),
-        cabinB1: area({
-            id: 'cabinB1', title: '둘째 오두막 · 1F', subtitle: '서재 · 창고 · 기도실', backgroundAssetId: 'bg.cabinB1', spawn: { x: 640, y: 520 }, ambience: 'cabin',
-            walls: [...borderWalls(), { x: 150, y: 90, w: 980, h: 30 }, { x: 150, y: 90, w: 30, h: 510 }, { x: 1100, y: 90, w: 30, h: 510 }, { x: 150, y: 570, w: 400, h: 30 }, { x: 730, y: 570, w: 400, h: 30 }, { x: 420, y: 90, w: 28, h: 360 }, { x: 820, y: 240, w: 28, h: 360 }],
+        cabinB1Hall: area({
+            id: 'cabinB1Hall', title: '둘째 오두막 · 북쪽 벌목장 관리동', subtitle: '1F 현관홀 · 멈춰 버린 출입 기록', backgroundAssetId: 'bg.cabinB1Hall', spawn: { x: 640, y: 520 }, ambience: 'cabin',
+            walls: [...borderWalls(), { x: 155, y: 45, w: 970, h: 28 }, { x: 155, y: 45, w: 28, h: 555 }, { x: 1097, y: 45, w: 28, h: 555 }, { x: 155, y: 575, w: 390, h: 25 }, { x: 735, y: 575, w: 390, h: 25 }],
             portals: [
-                { id: 'b1.exit', rect: { x: 580, y: 565, w: 120, h: 100 }, target: 'loggingRoad', spawn: { x: 1120, y: 360 }, label: '벌목로' },
-                { id: 'b1.toB2', rect: { x: 960, y: 120, w: 100, h: 80 }, target: 'cabinB2', spawn: { x: 260, y: 520 }, label: '2층 계단' }
+                { id: 'hall.exit', rect: { x: 565, y: 560, w: 140, h: 100 }, target: 'loggingRoad', spawn: { x: 1120, y: 360 }, label: '벌목로' },
+                { id: 'hall.toWing', rect: { x: 570, y: 55, w: 140, h: 90 }, target: 'cabinB1', spawn: { x: 640, y: 520 }, label: '서재 · 창고 · 기도실' },
+                { id: 'hall.toOffice', rect: { x: 210, y: 90, w: 130, h: 100 }, target: 'cabinB1Office', spawn: { x: 640, y: 520 }, label: '관리사무소' }
             ],
             interactions: [
-                { id: 'wood.tri', rect: { x: 235, y: 190, w: 120, h: 80 }, label: '멈춘 회중시계', action: 'woodcut.triangle', visibleWhen: 'atticClueSeen' },
-                { id: 'wood.circle', rect: { x: 520, y: 400, w: 140, h: 85 }, label: '썩은 짐', action: 'woodcut.circle', visibleWhen: 'atticClueSeen' },
-                { id: 'wood.cross', rect: { x: 900, y: 410, w: 120, h: 100 }, label: '목 잃은 여신상', action: 'woodcut.cross', visibleWhen: 'atticClueSeen' },
-                { id: 'b1.diary', rect: { x: 180, y: 370, w: 100, h: 80 }, label: '책상 위 낡은 일기', action: 'cabinB1.diary', visibleWhen: 'atticClueSeen' }
+                { id: 'hall.ledger', rect: { x: 280, y: 300, w: 180, h: 150 }, label: '출입 기록부', action: 'hall.ledger', hiddenWhen: 'hallLedgerSeen' },
+                { id: 'hall.coats', rect: { x: 820, y: 120, w: 220, h: 160 }, label: '걸린 우비 네 벌', action: 'hall.coats', hiddenWhen: 'hallCoatsSeen' }
+            ],
+            decorations: [{ rect: { x: 280, y: 300, w: 180, h: 150 }, fallback: '#49382a' }, { rect: { x: 820, y: 120, w: 220, h: 160 }, fallback: '#282a27' }]
+        }),
+        cabinB1Office: area({
+            id: 'cabinB1Office', title: '북쪽 벌목장 관리동 · 관리사무소', subtitle: '인부 명부 · 벌목 구역 지도', backgroundAssetId: 'bg.cabinB1Office', spawn: { x: 640, y: 520 }, ambience: 'cabin',
+            walls: [...borderWalls(), { x: 160, y: 60, w: 960, h: 28 }, { x: 160, y: 60, w: 28, h: 540 }, { x: 1092, y: 60, w: 28, h: 540 }, { x: 160, y: 575, w: 390, h: 25 }, { x: 730, y: 575, w: 390, h: 25 }],
+            portals: [{ id: 'office.back', rect: { x: 570, y: 560, w: 140, h: 100 }, target: 'cabinB1Hall', spawn: { x: 390, y: 190 }, label: '현관홀' }],
+            interactions: [
+                { id: 'office.roster', rect: { x: 285, y: 260, w: 240, h: 180 }, label: '인부 명부', action: 'office.roster', hiddenWhen: 'officeRosterSeen' },
+                { id: 'office.map', rect: { x: 780, y: 90, w: 220, h: 150 }, label: '벌목 구역 지도', action: 'office.map', hiddenWhen: 'officeMapSeen' },
+                { id: 'office.kneelingIcon', rect: { x: 560, y: 350, w: 150, h: 150 }, label: '기도하는 목상', action: 'office.kneelingIcon', visibleWhen: 'atticClueSeen', hiddenWhen: 'officeIconDecoySeen' }
+            ],
+            decorations: [{ rect: { x: 285, y: 260, w: 240, h: 180 }, fallback: '#4a3425' }, { rect: { x: 780, y: 90, w: 220, h: 150 }, fallback: '#594c38' }]
+        }),
+        cabinB1: area({
+            id: 'cabinB1', title: '둘째 오두막 · 북쪽 벌목장 관리동', subtitle: '1F 서재 · 창고 · 기도실', backgroundAssetId: 'bg.cabinB1', spawn: { x: 640, y: 520 }, ambience: 'cabin',
+            walls: [...borderWalls(), { x: 150, y: 90, w: 980, h: 30 }, { x: 150, y: 90, w: 30, h: 510 }, { x: 1100, y: 90, w: 30, h: 510 }, { x: 150, y: 570, w: 400, h: 30 }, { x: 730, y: 570, w: 400, h: 30 }, { x: 420, y: 90, w: 28, h: 360 }, { x: 820, y: 240, w: 28, h: 360 }],
+            portals: [
+                { id: 'b1.back', rect: { x: 580, y: 565, w: 120, h: 100 }, target: 'cabinB1Hall', spawn: { x: 640, y: 200 }, label: '현관홀' },
+                { id: 'b1.toRear', rect: { x: 960, y: 120, w: 100, h: 80 }, target: 'cabinB1Rear', spawn: { x: 640, y: 520 }, label: '숙소 · 작업장' }
+            ],
+            interactions: [
+                { id: 'wood.cross', rect: { x: 900, y: 410, w: 120, h: 100 }, label: '목 잃은 여신상', action: 'woodcut.cross', visibleWhen: 'crossHintFound' },
+                { id: 'b1.diary', rect: { x: 180, y: 370, w: 100, h: 80 }, label: '책상 위 낡은 일기', action: 'cabinB1.diary', visibleWhen: 'atticClueSeen' },
+                { id: 'wing.waxHint', rect: { x: 880, y: 520, w: 180, h: 45 }, label: '두껍게 굳은 촛농', action: 'wing.waxHint', visibleWhen: 'atticClueSeen', hiddenWhen: 'crossHintFound' },
+                { id: 'wing.clockDecoy', rect: { x: 250, y: 460, w: 130, h: 90 }, label: '흐르는 모래시계', action: 'wing.clockDecoy', visibleWhen: 'atticClueSeen', hiddenWhen: 'wingClockDecoySeen' },
+                { id: 'wing.bagDecoy', rect: { x: 600, y: 150, w: 160, h: 120 }, label: '말끔한 짐 꾸러미', action: 'wing.bagDecoy', visibleWhen: 'atticClueSeen', hiddenWhen: 'wingBagDecoySeen' },
+                { id: 'wing.statueDecoy', rect: { x: 850, y: 230, w: 140, h: 140 }, label: '팔 없는 성인상', action: 'wing.statueDecoy', visibleWhen: 'atticClueSeen', hiddenWhen: 'wingStatueDecoySeen' }
             ],
             decorations: [{ rect: { x: 210, y: 155, w: 165, h: 200 }, fallback: '#46382e' }, { rect: { x: 500, y: 300, w: 220, h: 190 }, fallback: '#332b25' }, { rect: { x: 880, y: 330, w: 170, h: 200 }, fallback: '#3c3936' }]
+        }),
+        cabinB1Rear: area({
+            id: 'cabinB1Rear', title: '북쪽 벌목장 관리동 · 후관', subtitle: '1F 벌목꾼 숙소 · 작업장', backgroundAssetId: 'bg.cabinB1Rear', spawn: { x: 640, y: 520 }, ambience: 'cabin',
+            walls: [...borderWalls(), { x: 140, y: 45, w: 1000, h: 28 }, { x: 140, y: 45, w: 28, h: 555 }, { x: 1112, y: 45, w: 28, h: 555 }, { x: 140, y: 575, w: 400, h: 25 }, { x: 740, y: 575, w: 400, h: 25 }, { x: 500, y: 65, w: 28, h: 260 }, { x: 690, y: 65, w: 28, h: 260 }],
+            portals: [
+                { id: 'rear.back', rect: { x: 575, y: 560, w: 130, h: 100 }, target: 'cabinB1', spawn: { x: 930, y: 220 }, label: '서재 · 창고 · 기도실' },
+                { id: 'rear.toB2', rect: { x: 1000, y: 90, w: 105, h: 100 }, target: 'cabinB2', spawn: { x: 260, y: 520 }, label: '2층 계단' },
+                { id: 'rear.toCellar', rect: { x: 1100, y: 330, w: 100, h: 130 }, target: 'cabinB1Cellar', spawn: { x: 640, y: 190 }, label: '지하 저장고' }
+            ],
+            interactions: [
+                { id: 'rear.bunk', rect: { x: 175, y: 190, w: 190, h: 230 }, label: '정리된 침상', action: 'rear.bunk', hiddenWhen: 'rearBunkSeen' },
+                { id: 'rear.workbench', rect: { x: 760, y: 250, w: 230, h: 180 }, label: '틀톱 정리대', action: 'rear.workbench', hiddenWhen: 'rearWorkbenchSeen' },
+                { id: 'rear.mildewHint', rect: { x: 390, y: 220, w: 100, h: 150 }, label: '곰팡내가 유독 진한 구석', action: 'rear.mildewHint', visibleWhen: 'atticClueSeen', hiddenWhen: 'circleHintFound' },
+                { id: 'wood.circle', rect: { x: 175, y: 450, w: 180, h: 100 }, label: '썩은 짐', action: 'woodcut.circle', visibleWhen: 'circleHintFound' },
+                { id: 'rear.satchel', rect: { x: 175, y: 75, w: 180, h: 100 }, label: '여행 가방', action: 'rear.satchel', visibleWhen: 'atticClueSeen', hiddenWhen: 'rearSatchelDecoySeen' }
+            ],
+            decorations: [{ rect: { x: 175, y: 190, w: 190, h: 230 }, fallback: '#40332c' }, { rect: { x: 760, y: 250, w: 230, h: 180 }, fallback: '#463627' }]
+        }),
+        cabinB1Cellar: area({
+            id: 'cabinB1Cellar', title: '북쪽 벌목장 관리동 · 지하 저장고', subtitle: '소금 상자 · 젖은 돌벽', backgroundAssetId: 'bg.cabinB1Cellar', spawn: { x: 640, y: 190 }, ambience: 'attic',
+            walls: [...borderWalls(), { x: 105, y: 25, w: 1070, h: 28 }, { x: 105, y: 25, w: 28, h: 620 }, { x: 1147, y: 25, w: 28, h: 620 }, { x: 105, y: 620, w: 1070, h: 25 }],
+            portals: [{ id: 'cellar.back', rect: { x: 570, y: 45, w: 140, h: 105 }, target: 'cabinB1Rear', spawn: { x: 1050, y: 390 }, label: '후관으로 올라가기' }],
+            interactions: [
+                { id: 'cellar.crates', rect: { x: 145, y: 170, w: 250, h: 360 }, label: '소금에 절인 식량', action: 'cellar.crates', hiddenWhen: 'cellarCratesSeen' },
+                { id: 'cellar.marks', rect: { x: 1000, y: 150, w: 120, h: 300 }, label: '벽의 손톱자국', action: 'cellar.marks', hiddenWhen: 'cellarMarksSeen' }
+            ],
+            decorations: [{ rect: { x: 145, y: 170, w: 250, h: 360 }, fallback: '#302b24' }, { rect: { x: 1000, y: 150, w: 120, h: 300 }, fallback: '#514338' }]
         }),
         cabinB2: area({
             id: 'cabinB2', title: '둘째 오두막 · 2F', subtitle: '천장의 흔적과 접이식 사다리', backgroundAssetId: 'bg.cabinB2', spawn: { x: 260, y: 520 }, ambience: 'cabin',
             walls: [...borderWalls(), { x: 140, y: 100, w: 1000, h: 30 }, { x: 140, y: 100, w: 30, h: 520 }, { x: 1110, y: 100, w: 30, h: 520 }, { x: 140, y: 590, w: 1000, h: 30 }, { x: 500, y: 250, w: 300, h: 38 }],
             portals: [
-                { id: 'b2.down', rect: { x: 150, y: 530, w: 90, h: 70 }, target: 'cabinB1', spawn: { x: 990, y: 260 }, label: '1층' },
+                { id: 'b2.down', rect: { x: 150, y: 530, w: 90, h: 70 }, target: 'cabinB1Rear', spawn: { x: 980, y: 240 }, label: '1층 후관' },
                 { id: 'b2.attic', rect: { x: 900, y: 130, w: 130, h: 80 }, target: 'attic', spawn: { x: 640, y: 500 }, label: '다락', requireFlag: 'atticOpened', denyMessage: '천장문은 너무 높다. 내려올 장치가 있어야 한다.' }
             ],
-            interactions: [{ id: 'b2.strap', rect: { x: 820, y: 170, w: 100, h: 110 }, label: '핏자국 끝 가죽 고리', action: 'cabinB.strap' }],
+            interactions: [
+                { id: 'b2.strap', rect: { x: 820, y: 170, w: 100, h: 110 }, label: '핏자국 끝 가죽 고리', action: 'cabinB.strap' },
+                { id: 'b2.watchHint', rect: { x: 200, y: 300, w: 130, h: 90 }, label: '습기 밴 모래 자국', action: 'b2.watchHint', visibleWhen: 'atticClueSeen', hiddenWhen: 'triangleHintFound' },
+                { id: 'wood.tri', rect: { x: 220, y: 160, w: 150, h: 110 }, label: '멈춘 모래시계', action: 'woodcut.triangle', visibleWhen: 'triangleHintFound' },
+                { id: 'b2.clockDecoy', rect: { x: 390, y: 150, w: 100, h: 95 }, label: '깨진 모래시계', action: 'b2.clockDecoy', visibleWhen: 'atticClueSeen', hiddenWhen: 'b2ClockDecoySeen' }
+            ],
             decorations: [{ rect: { x: 360, y: 350, w: 200, h: 100 }, fallback: '#45372f' }, { rect: { x: 760, y: 340, w: 180, h: 120 }, fallback: '#342b27' }]
         }),
         attic: area({

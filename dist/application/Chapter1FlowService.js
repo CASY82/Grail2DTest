@@ -45,6 +45,57 @@ export class Chapter1FlowService {
             case 'logging.cart':
                 this.progress.set('cartExamined');
                 return { title: '버려진 수레와 통나무 더미', body: '바퀴가 빠진 수레 위로 통나무가 무너져 쌓여 있다. 오래전에 일이 멈춘 채로 방치된 모습이다.' };
+            case 'hall.ledger':
+                this.progress.set('hallLedgerSeen');
+                return { title: '출입 기록부', body: '낡은 출입 기록부에 마지막 날짜까지 이름이 빼곡하다. 그 아래로는 아무도 서명하지 않았다.' };
+            case 'hall.coats':
+                this.progress.set('hallCoatsSeen');
+                return { title: '걸린 우비', body: '비에 젖은 우비 네 벌이 옷걸이에 그대로 걸려 있다. 밖은 아직도 비가 온다.' };
+            case 'office.roster':
+                this.progress.set('officeRosterSeen');
+                return { title: '인부 명부', body: '벌목 인부 명단 옆에 낯선 손글씨로 이름 셋이 덧붙여져 있다. 모두 붉은 줄이 그어져 있다. 명단 아래에는 “서재, 창고, 기도실 — 각자 맡은 곳에 남긴다.”라고 작게 적혀 있다.' };
+            case 'office.map':
+                this.progress.set('officeMapSeen');
+                return { title: '벌목 구역 지도', body: '벽에 걸린 벌목 구역 지도. 북쪽 한 구역에 못으로 몇 번이고 표시를 지운 흔적이 있다.' };
+            case 'rear.bunk':
+                this.progress.set('rearBunkSeen');
+                return { title: '정리된 침상', body: '담요가 각 잡혀 개어 있는 침상. 벌목꾼의 것이라기엔 지나치게 깔끔하다.' };
+            case 'rear.workbench':
+                this.progress.set('rearWorkbenchSeen');
+                return { title: '틀톱 정리대', body: '나무틀에 맨 손톱과 긴 2인용 톱이 가지런히 걸려 있다. 그중 하나만 곧은 쇠날이 심하게 무뎌져 있다 — 나무가 아닌 다른 것을 벤 것처럼.' };
+            case 'cellar.crates':
+                this.progress.set('cellarCratesSeen');
+                return { title: '소금에 절인 식량', body: '소금에 절인 식량 상자들이 줄지어 쌓여 있다. 마지막 상자 하나만 뚜껑이 안쪽에서 긁힌 자국투성이다.' };
+            case 'cellar.marks':
+                this.progress.set('cellarMarksSeen');
+                return { title: '벽의 손톱자국', body: '돌벽 낮은 곳에 손톱으로 그은 자국이 수십 줄 새겨져 있다. 날짜를 세던 것처럼, 또는 다른 무언가처럼.' };
+            case 'b2.watchHint':
+                this.progress.set('triangleHintFound');
+                return { title: '습기 밴 모래 자국', body: '침대 머리맡 작은 궤 위에 젖은 모래가 가늘게 흩어져 있다. 그 뒤의 모래시계는 유리가 온전한데도 축축한 모래가 위쪽에 엉겨 붙어 한 알도 흐르지 않는다.' };
+            case 'rear.mildewHint':
+                this.progress.set('circleHintFound');
+                return { title: '곰팡내가 유독 진한 구석', body: '침상 발치 쪽 바닥에서 유독 눅눅하고 시큼한 냄새가 올라온다. 오래 방치된 무언가가 안쪽에서 썩어가고 있는 냄새다.' };
+            case 'wing.waxHint':
+                this.progress.set('crossHintFound');
+                return { title: '두껍게 굳은 촛농', body: '기도대 앞바닥에 촛농이 유난히 두껍게 굳어 쌓여 있다. 누군가 이 자리에서 오래도록, 몇 번이고 무릎을 꿇었던 흔적이다.' };
+            case 'wing.clockDecoy':
+                this.progress.set('wingClockDecoySeen');
+                return { title: '흐르는 모래시계', body: '서재 선반의 모래시계. 낡았지만 마른 모래는 목을 지나 아래로 꾸준히 흐르고 있다. 멈춘 시간이 아니다.' };
+            case 'wing.bagDecoy':
+                this.progress.set('wingBagDecoySeen');
+                return { title: '말끔한 짐 꾸러미', body: '선반 위에 짐 꾸러미가 하나 더 놓여 있다. 가죽끈도 멀쩡하고 곰팡내도 나지 않는다 — 최근에 챙긴 짐이지, 오래 방치돼 썩은 짐이 아니다.' };
+            case 'wing.statueDecoy':
+                this.progress.set('wingStatueDecoySeen');
+                return { title: '팔 없는 성인상', body: '구석의 작은 성인상은 두 팔이 부러져 나갔다. 하지만 고개는 그대로다 — 목이 잘린 형상이 아니다.' };
+            case 'b2.clockDecoy':
+                this.progress.set('b2ClockDecoySeen');
+                return { title: '깨진 모래시계', body: '선반의 모래시계는 유리가 깨져 모래가 전부 쏟아졌다. 멈춘 것이 아니라 망가진 것이다. 뒤쪽에는 먼지만 쌓여 있다.' };
+            case 'office.kneelingIcon':
+                this.progress.set('officeIconDecoySeen');
+                return { title: '기도하는 목상', body: '책상 위 작은 나무 성상이 무릎을 꿇고 기도하는 자세로 놓여 있다. 목도, 얼굴도 멀쩡하다 — 기도하는 형상이지, 목 잘린 형상이 아니다.' };
+            case 'rear.satchel':
+                this.progress.set('rearSatchelDecoySeen');
+                return { title: '여행 가방', body: '정리된 침상 곁에 여행 가방이 놓여 있다. 열어 보아도 곰팡이 냄새 하나 없이 깔끔하다. 챙겨서 떠나려던 짐이지, 버려져 썩은 짐이 아니다.' };
             case 'cabinB.strap':
                 this.progress.set('atticOpened');
                 return { title: '가죽 고리', body: '핏자국 끝의 가죽 고리를 당기자 접이식 사다리가 천천히 내려온다.' };
@@ -56,10 +107,10 @@ export class Chapter1FlowService {
                 return { title: '받침대의 눈금', body: '거울과 촛대가 앉는 두 홈 테두리에 눈금이 촘촘히 새겨져 있다. 15도씩, 열세 칸. 그런데 유독 두 칸만 반들거린다 — 거울 쪽은 가운데서 오른쪽으로 세 칸, 촛대 쪽은 두 칸. 누군가 이 두 자리에만 셀 수 없이 손을 얹었던 흔적이다.' };
             case 'woodcut.triangle':
                 this.progress.addItem('woodcutTriangle');
-                return { title: '△ 목판화', body: '서재의 멈춘 회중시계 뒤에서 삼각형 목판화를 찾았다. 시계 유리 안쪽에, 누군가 손톱으로 “미안하다”고 긁어 놓았다.' };
+                return { title: '△ 목판화', body: '젖은 모래가 엉겨 멈춘 모래시계 뒤에서 삼각형 목판화를 찾았다. 나무 받침 안쪽에 누군가 “미안하다”고 긁어 놓았다.' };
             case 'woodcut.circle':
                 this.progress.addItem('woodcutCircle');
-                return { title: '○ 목판화', body: '창고의 썩은 짐 아래에서 원형 목판화를 찾았다. 짐 보따리는 오래전에 여행 채비를 마친 채로 버려진 것 같다 — 아무도 이 집을 떠나지 못했다.' };
+                return { title: '○ 목판화', body: '숙소 구석 썩은 짐 아래에서 원형 목판화를 찾았다. 짐 보따리는 오래전에 여행 채비를 마친 채로 버려진 것 같다 — 아무도 이 집을 떠나지 못했다.' };
             case 'woodcut.cross':
                 this.progress.addItem('woodcutCross');
                 return { title: '✠ 목판화', body: '기도실의 목 잃은 여신상 밑동에서 십자 목판화를 찾았다. 여신상의 목은 깨진 것이 아니라, 도구로 정교하게 잘려 나간 흔적이다.' };

@@ -50,7 +50,7 @@ test('third committed failure exposes a threat event for presentation audio, not
 
 test('cabin areas use matching generated interior art and readable exits',()=>{
   const manifest=JSON.parse(fs.readFileSync(new URL('../public/assets/manifest.json',import.meta.url),'utf8'));
-  for(const id of ['bg.cabinA','bg.cabinA.visited','bg.cabinB1','bg.cabinB2','bg.attic']){
+  for(const id of ['bg.cabinA','bg.cabinA.visited','bg.cabinB1Hall','bg.cabinB1Office','bg.cabinB1','bg.cabinB1Rear','bg.cabinB1Cellar','bg.cabinB2','bg.attic']){
     assert.match(manifest.images[id],/environment\/generated\/.*\.png$/);
   }
   const cabinA=chapter1World.areas.cabinA;
@@ -92,6 +92,95 @@ test('loggingRoad landmarks pay off the cabin.record clue without gating the rou
     for(const portal of logging.portals) assert.ok(!rectsOverlap(found.rect,portal.rect),`${id} must not overlap portal ${portal.id}`);
   }
   for(const portal of logging.portals) assert.equal(portal.requireFlag,undefined,'landmarks stay optional — no portal on loggingRoad may require them');
+});
+
+test('expanded management building keeps its optional story beats soft and clear of portals',()=>{
+  const expected={
+    cabinB1Hall:{'hall.ledger':'hallLedgerSeen','hall.coats':'hallCoatsSeen'},
+    cabinB1Office:{'office.roster':'officeRosterSeen','office.map':'officeMapSeen'},
+    cabinB1Rear:{'rear.bunk':'rearBunkSeen','rear.workbench':'rearWorkbenchSeen'},
+    cabinB1Cellar:{'cellar.crates':'cellarCratesSeen','cellar.marks':'cellarMarksSeen'}
+  };
+  for(const [areaId,interactions] of Object.entries(expected)){
+    const area=chapter1World.areas[areaId]; assert.ok(area,`${areaId} must exist`);
+    for(const [id,flag] of Object.entries(interactions)){
+      const found=area.interactions.find(i=>i.id===id); assert.ok(found,`${id} must exist in ${areaId}`);
+      assert.equal(found.hiddenWhen,flag); assert.equal(found.visibleWhen,undefined);
+      for(const portal of area.portals) assert.ok(!rectsOverlap(found.rect,portal.rect),`${id} must not overlap ${portal.id}`);
+    }
+    for(const portal of area.portals) assert.equal(portal.requireFlag,undefined,`${areaId} story beats must not gate travel`);
+  }
+});
+
+test('management building spine and optional branches preserve the three-room puzzle wing',()=>{
+  const hall=chapter1World.areas.cabinB1Hall;
+  assert.equal(hall.portals.find(p=>p.id==='hall.toWing')?.target,'cabinB1');
+  assert.equal(hall.portals.find(p=>p.id==='hall.toOffice')?.target,'cabinB1Office');
+  assert.equal(chapter1World.areas.cabinB1.portals.find(p=>p.id==='b1.toRear')?.target,'cabinB1Rear');
+  assert.equal(chapter1World.areas.cabinB1Rear.portals.find(p=>p.id==='rear.toB2')?.target,'cabinB2');
+  assert.equal(chapter1World.areas.cabinB1Rear.portals.find(p=>p.id==='rear.toCellar')?.target,'cabinB1Cellar');
+  const woodcuts=[
+    ['cabinB2','wood.tri','triangleHintFound'],
+    ['cabinB1Rear','wood.circle','circleHintFound'],
+    ['cabinB1','wood.cross','crossHintFound']
+  ];
+  for(const [areaId,id,flag] of woodcuts){
+    assert.equal(chapter1World.areas[areaId].interactions.find(i=>i.id===id)?.visibleWhen,flag);
+  }
+});
+
+test('woodcut search uses one discoverable hint before each hidden trigger',()=>{
+  const chains=[
+    ['cabinB2','b2.watchHint','triangleHintFound','wood.tri'],
+    ['cabinB1Rear','rear.mildewHint','circleHintFound','wood.circle'],
+    ['cabinB1','wing.waxHint','crossHintFound','wood.cross']
+  ];
+  for(const [areaId,hintId,flag,woodcutId] of chains){
+    const area=chapter1World.areas[areaId];
+    const hint=area.interactions.find(i=>i.id===hintId);
+    const woodcut=area.interactions.find(i=>i.id===woodcutId);
+    assert.ok(hint && woodcut,`${areaId} must contain ${hintId} and ${woodcutId}`);
+    assert.equal(hint.visibleWhen,'atticClueSeen'); assert.equal(hint.hiddenWhen,flag);
+    assert.equal(woodcut.visibleWhen,flag);
+    assert.ok(!rectsOverlap(hint.rect,woodcut.rect),`${hintId} and ${woodcutId} need separate search targets`);
+    for(const portal of area.portals){
+      assert.ok(!rectsOverlap(hint.rect,portal.rect),`${hintId} must not overlap ${portal.id}`);
+      assert.ok(!rectsOverlap(woodcut.rect,portal.rect),`${woodcutId} must not overlap ${portal.id}`);
+    }
+  }
+});
+
+test('six puzzle decoys are clue-gated, one-shot, and separate from travel portals',()=>{
+  const decoys=[
+    ['cabinB1','wing.clockDecoy','wingClockDecoySeen'],
+    ['cabinB1','wing.bagDecoy','wingBagDecoySeen'],
+    ['cabinB1','wing.statueDecoy','wingStatueDecoySeen'],
+    ['cabinB2','b2.clockDecoy','b2ClockDecoySeen'],
+    ['cabinB1Office','office.kneelingIcon','officeIconDecoySeen'],
+    ['cabinB1Rear','rear.satchel','rearSatchelDecoySeen']
+  ];
+  for(const [areaId,id,flag] of decoys){
+    const area=chapter1World.areas[areaId]; const decoy=area.interactions.find(i=>i.id===id);
+    assert.ok(decoy,`${id} must exist in ${areaId}`);
+    assert.equal(decoy.visibleWhen,'atticClueSeen'); assert.equal(decoy.hiddenWhen,flag);
+    for(const portal of area.portals) assert.ok(!rectsOverlap(decoy.rect,portal.rect),`${id} must not overlap ${portal.id}`);
+  }
+});
+
+test('historically revised puzzle rooms use versioned art while superseded art stays out of the manifest',()=>{
+  const manifest=JSON.parse(fs.readFileSync(new URL('../public/assets/manifest.json',import.meta.url),'utf8'));
+  assert.match(manifest.images['bg.cabinB1'],/cabin-b1-v3\.png$/);
+  assert.match(manifest.images['bg.cabinB1Rear'],/cabin-b1-rear-v3\.png$/);
+  assert.match(manifest.images['bg.cabinB2'],/cabin-b2-v3\.png$/);
+});
+
+test('1358 puzzle props avoid portable mechanical clocks and circular saw terminology',()=>{
+  const relevant=['wing.clockDecoy','b2.watchHint','b2.clockDecoy','woodcut.triangle','rear.workbench'];
+  const source=fs.readFileSync(new URL('../dist/application/Chapter1FlowService.js',import.meta.url),'utf8');
+  for(const forbidden of ['손목시계','회중시계','탁상시계','원형 톱']) assert.ok(!source.includes(forbidden),`${forbidden} must not survive in runtime copy`);
+  for(const action of relevant) assert.ok(source.includes(`case '${action}'`),`${action} must remain implemented after terminology revision`);
+  assert.equal(chapter1World.areas.cabinB2.interactions.find(i=>i.id==='wood.tri')?.label,'멈춘 모래시계');
+  assert.equal(chapter1World.areas.cabinB1Rear.interactions.find(i=>i.id==='rear.workbench')?.label,'틀톱 정리대');
 });
 
 test('forest one-time atmosphere beats do not block any of its four portals',()=>{

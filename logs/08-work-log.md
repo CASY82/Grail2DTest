@@ -72,3 +72,35 @@ Chapter 1 전체 플레이타임 목표 ~30분에 비해 퍼즐 파트가 너무
 - **구현 후 재감사**: 같은 임시 스크립트를 다시 돌려(작업 후 삭제) 갱신치 확인 — 이동 2.42→2.58분, 읽기(선택 포함) 3.59→4.83분. 측정 합계 6~7분 → **7.9~10.4분**. 2~2.5배 현실 보정 시 **약 15.8~26분** — 30분 목표에 근접했지만 정확히 도달했다는 보장은 없음(플랜에 이미 명시한 한계).
 - 헤드리스 Edge + localStorage 세이브 주입으로 새 인터랙션 3개(숲/벌목로/첫오두막 각 1개씩) 실제 동작 스크린샷 확인. 흥미로운 점: 기존에 이미 있던 `Chapter1Progress.objective()`의 `routeKnown` 텍스트("옛 벌목로의 랜드마크를 따라...")와 `GameController.currentArea()`의 `cabinA` 재방문 부제("...젖은 발자국과...")가 이번에 추가한 콘텐츠와 정확히 맞아떨어짐 — 원래 텍스트가 미리 약속해뒀던 걸 뒤늦게 구현한 셈.
 - 검증: `npm run build && node --test tests/ && node tests/smoke.mjs` 통과(11/11 + smoke).
+
+### 관리동(둘째 오두막) 1F 확장 구현
+
+`logs/09-remaining-work-2026-08-16.md` 4장의 확장 설계를 기준으로 기존 1F 퍼즐 구역의 좌/중/우 배치와 `atticClueSeen` 게이팅은 유지하면서 관리동 전체를 5개 Area로 확장했다.
+
+- 필수 동선: `loggingRoad → cabinB1Hall(현관홀) → cabinB1(기존 서재·창고·기도실) → cabinB1Rear(숙소·작업장) → cabinB2`.
+- 선택 동선: 현관홀에서 `cabinB1Office`, 후관에서 `cabinB1Cellar`로 왕복. 진행 게이트 없이 언제든 건너뛸 수 있다.
+- imagegen으로 기존 `cabin-b1-v1.png`의 카메라·팔레트·건축 스타일을 참조해 신규 배경 4장(`cabin-b1-hall/office/rear/cellar-v1.png`)을 제작하고 manifest에 등록했다.
+- 신규 soft/1회성 조사 8개(출입 기록부·우비·인부 명부·구역 지도·침상·톱날 정리대·식량 상자·손톱자국)와 자기 숨김용 `ProgressFlag` 8개를 추가했다. 목표 우선순위와 기존 퍼즐 진행에는 영향을 주지 않는다.
+- 포탈 왕복 스폰, 벽 충돌, 조사 지점/포탈 비겹침, 3개 목판화의 기존 게이팅 보존 테스트를 추가했다.
+- 검증: `npm test` 통과(13/13 + world/progression smoke), TypeScript 빌드 및 `dist/` 동기화 완료.
+
+### 목판화 수색 퍼즐 심화 — 힌트 체인·구역 분산·디코이
+
+`logs/09-remaining-work-2026-08-16.md` 5~6장의 최종 개정안을 구현했다. 기존 다락 암호 원문은 유지하고 목판화 회수만 관리동 스파인 전체에 분산했다.
+
+- 정답 배치: `cabinB2`의 멈춘 회중시계 뒤 △, `cabinB1Rear`의 썩은 짐 아래 ○, `cabinB1` 기도실의 목 잃은 여신상 아래 ✠.
+- 힌트 체인: `b2.watchHint`→`triangleHintFound`, `rear.mildewHint`→`circleHintFound`, `wing.waxHint`→`crossHintFound`. 다락 단서를 본 뒤 힌트가 나타나고, 힌트를 조사한 뒤에만 대응 목판화가 보인다.
+- 디코이 6종: Wing 3종, 2F 탁상시계, 관리사무소 목상, 후관 여행 가방. 전부 `atticClueSeen` 이후 노출되고 전용 `hiddenWhen` 플래그로 1회 조사 후 사라진다.
+- HUD 목표를 “건물 곳곳에서 △ ○ ✠ 목판화를 찾아라.”로 수정하고 △/○ 습득 대사를 새 위치에 맞췄다. 다락의 정본 암호 문장은 수정하지 않았다.
+- 변경된 오브젝트가 배경에도 보이도록 imagegen 편집으로 Wing·후관·2층 배경 `v2` 3장을 제작해 manifest를 교체했다. 기존 `v1` 3장은 `public/assets/backups/2026-08-16-puzzle-pre-redesign/`에 복사했고 `.gitignore`로 백업 전체를 제외했다.
+- 테스트를 힌트→정답 가시성 체인, 디코이 6종의 일회성/포탈 비겹침, v2 manifest 사용까지 확장했다.
+- 검증: `npm test` 통과(16/16 + world/progression smoke), `npm run check`, `git diff --check`, 백업 경로 `git check-ignore` 확인 완료.
+
+### 1358년 시대 고증 수정
+
+`logs/10-anachronism-review-2026-08-16.md`의 시계류·톱 형태 판정을 코드와 이미지에 반영했다.
+
+- 회중시계/손목시계/탁상시계를 각각 멈춘·흐르는·깨진 모래시계로 재설계해 `"멈춘 시간 뒤"` 암호와 정답/디코이 구별을 유지했다.
+- `톱날 정리대`를 틀톱·직선 손톱·2인용 긴 톱으로 명시하고 배경의 원형 톱날을 제거했다.
+- Wing·후관·2층 배경을 고증 수정 `v3`로 교체하고 직전 `v2` 이미지는 기존 Git 제외 백업 폴더로 이동했다.
+- 상세 판정·프롬프트 의도·백업·검증 기록은 `logs/11-anachronism-fix-2026-08-16.md`에 분리해 남겼다.
