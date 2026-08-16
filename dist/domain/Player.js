@@ -7,6 +7,7 @@ export class Player {
     running = false;
     crouching = false;
     noiseRadiusMeters = 0;
+    controlMultiplier = 1;
     constructor(position) { this.position = { ...position }; }
     bounds(at = this.position) {
         return { x: at.x - this.size.w / 2, y: at.y - this.size.h / 2, w: this.size.w, h: this.size.h };

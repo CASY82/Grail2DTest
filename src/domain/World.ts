@@ -28,6 +28,16 @@ export interface DecorationDefinition {
   alpha?: number;
 }
 
+export interface PursuitDefinition {
+  enemyAssetId: string;
+  spawn: Vec2;
+  speed: number;
+  catchTitle: string;
+  catchBody: string;
+  /** When true, the chase starts the instant the player walks into this Area (no interaction needed). */
+  onEnter?: boolean;
+}
+
 export interface AreaDefinition {
   id: AreaId;
   title: string;
@@ -39,6 +49,7 @@ export interface AreaDefinition {
   interactions: InteractionDefinition[];
   decorations: DecorationDefinition[];
   ambience: 'rain' | 'cabin' | 'logging' | 'attic' | 'chase' | 'silence';
+  pursuit?: PursuitDefinition;
 }
 
-export interface WorldDefinition { areas: Record<AreaId, AreaDefinition>; }
+export interface WorldDefinition { areas: Partial<Record<AreaId, AreaDefinition>>; }

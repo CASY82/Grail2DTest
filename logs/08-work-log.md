@@ -104,3 +104,57 @@ Chapter 1 전체 플레이타임 목표 ~30분에 비해 퍼즐 파트가 너무
 - `톱날 정리대`를 틀톱·직선 손톱·2인용 긴 톱으로 명시하고 배경의 원형 톱날을 제거했다.
 - Wing·후관·2층 배경을 고증 수정 `v3`로 교체하고 직전 `v2` 이미지는 기존 Git 제외 백업 폴더로 이동했다.
 - 상세 판정·프롬프트 의도·백업·검증 기록은 `logs/11-anachronism-fix-2026-08-16.md`에 분리해 남겼다.
+
+### GR-2/GR-3 플레이어블 확장 및 전체 배경 제작
+
+`logs/12-chapter2-3-level-design-2026-08-16.md`를 구현 정본으로 삼아 10년차 게임 개발자·게임 디자이너 역할 에이전트가 병렬로 작업했다.
+
+- GR-2 14개 Area와 GR-3 11개 Area, 각 챕터 진행 모델/플로우, 와인 6단·네 이름 순서 퍼즐, 세 진실 석판, 레지널드 조우, 하층 편도 동선, 의식실 조작력 감쇠를 구현했다.
+- 시작 및 챕터 완료 후 GR-1/2/3 선택 UI를 추가하고, 저장 스냅샷에 `chapterId`를 추가했다. 기존 `chapterId` 없는 세이브는 GR-1로 읽어 하위 호환한다.
+- built-in imagegen으로 GR-2/GR-3 코드가 참조하는 배경 25종을 각각 별도 생성해 1280×720 RGB PNG로 정규화하고 manifest에 연결했다. 레지널드는 176×240 RGBA top-down 스프라이트로 추가했다.
+- 에셋 자동 대조 결과: 참조 배경 ID 25개, manifest/파일 누락 0개, 크기·포맷 오류 0개, 고유 경로 25/25. 전체 contact sheet와 핵심 P0 5종을 직접 시각 검수했다.
+- `index.html`의 제목과 Canvas 접근성 라벨을 Chapter 1–3 범위로 갱신했다.
+- 검증: `npm run check`, `npm run build`, `/mnt/f/Nodejs/node.exe --test tests/` 21/21, 기존 `tests/smoke.mjs` 통과. 정적 HTTP로 `index.html`과 manifest 응답도 확인했다.
+- 미검증: 실제 브라우저 키보드 플레이스루와 390×844 모바일 화면 캡처는 현재 환경에서 수행하지 못했다. 전투 확률 결과가 없는 내러티브 탐험형 프로토타입이므로 별도 Monte Carlo 대상은 없다.
+
+### 챕터 선택 입력 차단 수정
+
+- 시작 화면에 챕터 버튼은 표시됐지만 부모 `.overlay`의 `pointer-events:none` 때문에 마우스·터치 선택이 차단되던 문제를 수정했다.
+- `.chapter-select button`에 포인터 입력과 명확한 focus 스타일을 추가하고, 클릭/터치 외에도 숫자키 1~3, 방향키, Enter/Space 선택을 지원한다.
+- 회귀 테스트를 추가하고 `npm run check`, 빌드, 전체 22/22 테스트, 기존 GR-1 스모크 테스트를 통과했다.
+
+### 새로고침 캐시 무효화
+
+- 새 게임/세이브 초기화와 무관하게, 일반 새로고침 때 코드·manifest·이미지가 최신 파일로 다시 로드되도록 개발 서버에 `no-store, no-cache, must-revalidate` 헤더를 적용했다.
+- manifest fetch에 `cache:'no-store'`를 지정하고 페이지 로드별 토큰을 manifest와 이미지 URL에 붙였다.
+- `localStorage` 저장 키와 저장소 로직은 변경하지 않아 진행 데이터는 새로고침 후에도 유지된다.
+- `npm run check`, 빌드, 전체 22/22 테스트, 기존 GR-1 스모크 테스트 통과.
+
+### GR-2 광장 도로와 포탈 동선 정렬
+
+- 실제 `village-square-hub-v1.png`의 도로/성 원경을 기준으로 허브 포탈을 재배치했다: The Black Lamb 여관은 남쪽 기존 성문 길, Blackwood 성 방향은 오른쪽 상단, 상점가는 왼쪽 길, 시청은 위쪽 길.
+- 공용 포탈의 자동 스폰이 광장 복귀 시 플레이어를 반대편 끝에 놓던 문제를 해결하기 위해 명시적 target spawn을 지원하고, 네 스포크의 복귀 위치를 각 광장 입구 안쪽으로 고정했다.
+- GR-2 시작 위치를 광장 남쪽 중앙으로 옮겨 여관 접근 거리를 줄였다.
+- 배경 도로 좌표와 왕복 스폰을 고정하는 회귀 테스트를 추가했다. `npm run check`, 빌드, 전체 23/23 테스트, 기존 GR-1 스모크 테스트 통과.
+
+### GR-2 시청·상점가 복원 및 촛대 간격 수정
+
+- 첫 광장 재배치에서 함께 옮겨 가독성이 떨어진 시청과 상점가를 각각 기존 상단 중앙·오른쪽 하단 출구로 복원했다. Blackwood 성 방향은 오른쪽 상단, 여관은 남쪽에 유지해 네 경로를 모두 분리했다.
+- 각 스포크에서 광장으로 돌아오는 위치도 복원된 출구 안쪽으로 맞췄다.
+- 남쪽 여관 안내와 우선 표시가 겹치던 `square.candle`을 왼쪽 아래로 이동하고, 여관 포탈과 중심 거리 180px 초과를 회귀 테스트로 고정했다.
+- `npm run check`, 빌드, 전체 23/23 테스트, 기존 GR-1 스모크 테스트 통과.
+
+### GR-2/GR-3 실추격 시스템 도입 · CLAUDE.md GR-2/GR-3 매핑 추가
+
+`logs/12-chapter2-3-level-design-2026-08-16.md` 1.5/2.3은 GR-1의 "Hollow는 추격하지 않는다" 결정을 그대로 계승해 GR-2/GR-3도 전부 `sighting`(2.4초 스침 후 소멸) 패턴으로 설계했으나, 사용자가 "챕터2부터는 괴물이 쫓아오지 않는다, 쫓아올 수 있게 해달라"고 요청 — GR-2/GR-3에 한해 완전한 추격/붙잡힘 시스템으로 뒤집었다(GR-1의 Hollow는 그대로 유지, 사용자가 범위를 GR-2/GR-3로 명시적으로 한정).
+
+- 신규 `domain/Pursuer.ts`(GR-2/GR-3 전용 단일 추격자 엔티티)와 `application/PursuitService.ts`(순수 서비스 — 매 프레임 플레이어 방향으로 축 분리 이동, 벽에 막힘, bounds 겹침으로 포획 판정). `MovementService.moveAxis`와 동일한 충돌 방식을 재사용해 별도 문서 없이도 일관된 동작을 보장.
+- `domain/World.ts`에 `AreaDefinition.pursuit`(엔티티 스폰/속도/포획 메시지/`onEnter` 자동발동 여부) 추가, `WorldFactory.room()`이 선택 인자로 받는다.
+- 적용 지점 5곳: GR-2 `marketAlley`(Hollow, `alley.mirror` 상호작용으로 발동 — `ActionResult.startPursuit`), `innCellarEscape`(Maw, 진입 즉시 발동), `villageChaseFinal`(다중 위협 근사, 진입 즉시 발동). GR-3 `corridorDescent`/`greatHallSealed`(레지널드 추격 페이즈 P2/P3, 진입 즉시 발동). 이산 클릭 퍼즐인 `innCellar`(와인 선반)와 정지된 대면 연출인 `office2F`(`study.reginald`)는 의도적으로 제외 — 각각 LDD의 "실패해도 게임오버 없음" 퍼즐 원칙과 "대면"(추격 아님) 서술을 존중.
+- `GameController`에 `pursuer`/`pursuit`/`pursuitGrace` 필드와 `activatePursuit()`/`handleCatch()` 추가. 포획 시 메시지 표시 → 현재 Area 스폰 지점으로 복귀 → 1.5초 유예 후 `onEnter` 추격 자동 재개. 진행 플래그/아이템은 잃지 않는다(다른 시스템과 동일한 무손실 원칙). Area 전환 시 추격은 항상 해제.
+- `Chapter1FlowService.ActionResult`에 `startPursuit` 필드 추가, `Chapter2FlowService`의 `alley.mirror`를 `sighting`에서 `startPursuit`로 교체, `escape.lamp`의 `sighting`은 제거(이미 지역 진입 시 자동 발동이므로 중복).
+- 기존 GR-1 전용 `Hollow.assetId` 필드를 추가해 `triggerSighting()`이 챕터3에서는 `character.reginald` 스프라이트를 쓰도록 수정(레지널드 "대면" 스침 연출이 Hollow 그림으로 잘못 표시되던 기존 불일치 수정, GR-1 동작은 그대로).
+- `CanvasRenderer`에 `drawPursuer()` 추가(`enemy.maw`처럼 전용 아트가 없는 경우 fallback 사각형).
+- `CLAUDE.md`에 신규 "설계 문서 vs 구현 — GR-2/GR-3 매핑" 섹션(추격 시스템 설명 포함)을 추가하고, GR-1 매핑의 무추격 결정 문구에 "GR-1 한정" 범위를 명시, 인트로/아키텍처 절도 챕터 1–3 전체 반영으로 갱신, 이미 구현된 GR-2/GR-3를 "아직 반영되지 않은 문서 항목"에서 제거.
+- 신규 테스트 3개(`tests/chapter2-3.test.mjs`): 추격 존 5곳의 스폰 좌표가 벽과 겹치지 않고 진입 지점과 충분히 떨어져 있는지, `alley.mirror`가 `startPursuit`를 반환하는지, `PursuitService`가 벽에 막히고 포획을 판정하는지.
+- 검증: `npm run build && node --test tests/`(26/26) `&& node tests/smoke.mjs` 통과. 실제 브라우저 플레이스루는 이 환경에서 `server.mjs`의 로컬 포트가 WSL↔Windows 간 curl로 응답하지 않아 수행하지 못함(기존 세션들과 동일한 환경 제약, 코드 변경으로 인한 문제 아님) — 미검증.

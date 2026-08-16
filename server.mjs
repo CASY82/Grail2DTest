@@ -19,7 +19,12 @@ createServer(async (req, res) => {
     const file = join(root, safe);
     const info = await stat(file);
     if (!info.isFile()) throw new Error('not file');
-    res.writeHead(200, { 'Content-Type': types[extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-store' });
+    res.writeHead(200, {
+      'Content-Type': types[extname(file)] || 'application/octet-stream',
+      'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
+      'Pragma': 'no-cache',
+      'Expires': '0'
+    });
     res.end(await readFile(file));
   } catch {
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });

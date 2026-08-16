@@ -1,4 +1,6 @@
 import { chapter1World } from './config/Chapter1World.js';
+import { chapter2World } from './config/Chapter2World.js';
+import { chapter3World } from './config/Chapter3World.js';
 import { SaveGameService } from './application/SaveGameService.js';
 import { BrowserInput } from './infrastructure/BrowserInput.js';
 import { CanvasRenderer } from './infrastructure/CanvasRenderer.js';
@@ -15,7 +17,7 @@ if(!canvas||!overlay||!puzzle) throw new Error('Required DOM nodes are missing.'
 
 const assets=new ManifestAssetProvider();
 const controller=new GameController(
-  chapter1World,
+  {1:chapter1World,2:chapter2World,3:chapter3World},
   new BrowserInput(),
   new CanvasRenderer(canvas,assets),
   assets,

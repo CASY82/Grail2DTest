@@ -1,8 +1,9 @@
-# GRAIL — Chapter 1 HTML5 Prototype
+# GRAIL — Chapter 1–3 HTML5 Prototype
 
-호러 어드벤처 GRAIL의 **Chapter 1 (GR-1, Ashvale Forest)** 을 2D top-down Canvas로 구현한 프로토타입입니다.
+호러 어드벤처 GRAIL의 **GR-1(Ashvale Forest) · GR-2(Ashvale Village) · GR-3(Blackwood Castle)** 3개 챕터를 2D top-down Canvas로 구현한 프로토타입입니다.
 레벨 설계의 정본은 `f:\AI\develop\casy\used\Grail_Chapter_Level_Design_v2_latest.docx` (LDD v2.0 Revised, 2026-08-05) 이며,
-이 리포지토리는 그중 **GR-1(3장)** 을 웹 브라우저에서 플레이 가능한 형태로 옮긴 것입니다.
+GR-2·GR-3는 이를 이 코드베이스의 실제 문법으로 옮긴 설계 문서 `logs/12-chapter2-3-level-design-2026-08-16.md`를 정본으로 구현했습니다.
+시작 화면(및 챕터 완료 후)에서 챕터 1~3 중 하나를 선택해 플레이합니다.
 
 원본 게임은 1인칭 3D를 전제로 설계되었지만, 이 프로토타입은 **2D top-down 단순화 구현**입니다.
 코드를 수정하거나 새 기능을 추가하기 전에 아래 "설계 문서 vs 구현" 섹션에서 의도적 차이점을 먼저 확인하세요.
@@ -31,10 +32,10 @@ Infrastructure ──▶ Application ──▶ Domain
      └──── Ports(interface) ────┘
 ```
 
-- `domain/` — 순수 게임 규칙/모델 (Chapter1 진행 플래그, Player, Hollow, Geometry, World 정의). Canvas·DOM·LocalStorage를 모른다.
-- `application/` — 유스케이스: `Chapter1FlowService`(상호작용 분기), `MovementService`(이동/충돌), `ShadowPuzzleService`(그림자 봉인 퍼즐 판정), `SaveGameService`. 구체 구현이 아닌 `ports/Ports.ts`의 인터페이스(Renderer/Input/Save/Asset/Audio/Modal)만 사용.
+- `domain/` — 순수 게임 규칙/모델 (Chapter1/2/3 진행 플래그, Player, Hollow, Pursuer, Geometry, World 정의). Canvas·DOM·LocalStorage를 모른다.
+- `application/` — 유스케이스: `Chapter1FlowService`/`Chapter2FlowService`/`Chapter3FlowService`(상호작용 분기), `MovementService`(플레이어 이동/충돌), `PursuitService`(GR-2/GR-3 추격자 이동/포획 판정), `ShadowPuzzleService`/`SequencePuzzleService`(퍼즐 판정), `RitualSequenceService`(GR-3 의식실 조작권 감쇠), `SaveGameService`. 구체 구현이 아닌 `ports/Ports.ts`의 인터페이스(Renderer/Input/Save/Asset/Audio/Modal)만 사용.
 - `infrastructure/` — 브라우저 구현체: `CanvasRenderer`, `BrowserInput`, `ManifestAssetProvider`, `LocalStorageSaveRepository`, `WebAudioPort`.
-- `config/Chapter1World.ts` — CH1 맵 전체(Area/Wall/Portal/Interaction/Decoration)를 데이터로 정의. 새 구역/오브젝트를 추가할 때는 여기부터 본다.
+- `config/Chapter1World.ts`/`Chapter2World.ts`/`Chapter3World.ts` — 챕터별 맵 전체(Area/Wall/Portal/Interaction/Decoration/Pursuit)를 데이터로 정의. `WorldFactory.ts`의 `room()`/`portal()`/`interaction()` 헬퍼를 공유한다. 새 구역/오브젝트를 추가할 때는 여기부터 본다.
 
 향후 렌더러를 Phaser 등으로 교체하려면 `RendererPort` 구현체만 새로 만들면 되고,
 맵을 Tiled로 옮기려면 `TiledWorldLoader`(Infrastructure) → `WorldDefinition`(Domain) 어댑터를 추가하는 방식을 권장(README 참고). Domain/Application은 건드리지 않는다.
@@ -67,7 +68,7 @@ Infrastructure ──▶ Application ──▶ Domain
 - **조작**: 문서 1.2의 Space(장애물 넘기)/Tab(단서 확인)는 미구현. 대신 `` ` `` (충돌/소음 디버그 표시)가 추가되어 있음(README 참고).
 - **체력/정신력/횃불**: 문서 1.2의 체력 3타, 정신력 100(감소 로직), 횃불 20분 시스템은 아직 구현되지 않음. 등잔(F키) ON/OFF와 시야 변화만 존재.
 - **적**: 문서는 GR-1에 "늑대(연출)"와 "The Hollow 1체"를 배치하지만, 구현에는 늑대 연출이 없고 Hollow만 존재.
-- **Hollow는 플레이어를 추격하지 않는다**: 문서에 반복적으로 등장하는 "강제 추격/붙잡힘" 문구와 달리, 실제 시나리오 의도는 Hollow가 게임플레이 장애물이 아니라 분위기 연출이라는 확인을 받아 되돌렸다. 다락 창문(`attic.window`) 상호작용은 `Chapter1FlowService`가 `sighting:true`를 반환하고, `GameController.triggerSighting()`이 Hollow를 창밖 인근(x:960,y:230)에 `SIGHTING_SECONDS(2.4초)` 동안만 표시한 뒤 사라지게 한다. 이동/추적 AI, 포탈 봉쇄, 붙잡힘 실패 상태는 없다 — `audio.pulse('hollow')`로 저음 사운드만 재생되고 플레이어는 그 즉시 자유롭게 관문까지 돌아갈 수 있다. 이전에 있던 `ChaseService`/`ChaseRules`(추격 이동·강제 경로·유예시간)는 삭제되었다.
+- **GR-1의 Hollow는 플레이어를 추격하지 않는다 (GR-1 한정 — 이 결정을 GR-2/GR-3까지 확장하지 말 것)**: 문서에 반복적으로 등장하는 "강제 추격/붙잡힘" 문구와 달리, GR-1 한정으로는 Hollow가 게임플레이 장애물이 아니라 분위기 연출이라는 확인을 받아 되돌렸다. 다락 창문(`attic.window`) 상호작용은 `Chapter1FlowService`가 `sighting:true`를 반환하고, `GameController.triggerSighting()`이 Hollow를 창밖 인근(x:960,y:230)에 `SIGHTING_SECONDS(2.4초)` 동안만 표시한 뒤 사라지게 한다. 이동/추적 AI, 포탈 봉쇄, 붙잡힘 실패 상태는 없다 — `audio.pulse('hollow')`로 저음 사운드만 재생되고 플레이어는 그 즉시 자유롭게 관문까지 돌아갈 수 있다. 이전에 있던 `ChaseService`/`ChaseRules`(추격 이동·강제 경로·유예시간)는 삭제되었다. **2026-08-16 재확인**: 이 무추격 결정은 GR-1의 단일 Hollow 인스턴스에만 적용된다 — GR-2/GR-3는 아래 GR-2/GR-3 매핑 섹션의 `PursuitService` 실추격 시스템을 쓴다. `study.reginald`(GR-3 2층 집무실)처럼 여전히 "대면"만 하고 지나가는 지점은 `Hollow`/`triggerSighting()`을 그대로 재사용하지만, 이는 무추격 결정의 재확인이 아니라 그 지점 자체가 정지된 스침 연출이기 때문이다.
 - **그림자 봉인 퍼즐은 더 이상 blind-guess가 아니다**: 원 설계 문서는 1인칭 3D에서 거울/촛대가 실제로 회전하며 벽에 그림자가 투사되는 것을 전제하지만, 이 프로토타입에는 그런 3D 셰도우캐스팅이 없다. 이를 2D-native하게 재구현했다 — `ModalView.showShadowPuzzle()`은 손잡이(±15°)를 조작할 때마다 `ShadowPuzzleService.align()`(순수 함수, 실패 카운트에 영향 없음)을 즉시 재호출해 SVG 다이얼과 겹침 % / "차갑다~완전히 겹쳤다" 온도어 라벨을 실시간으로 갱신한다. "봉인 확인" 버튼은 `attempt()`를 호출하는 커밋 동작으로, 이미 실시간으로 정답 여부를 아는 상태에서 누르므로 더 이상 맹목적 추측이 아니다. 정답(거울 45°/촛대 30°)으로 가는 디제틱 단서는 다락의 새 상호작용 `attic.mechanism`("받침대 테두리 살피기")이 제공한다 — 받침대 눈금(15° 간격 13칸) 중 두 칸만 유난히 닳아 반들거린다는 환경 스토리텔링이며, `mechanismExamined` 플래그(`ProgressFlag`)가 true일 때만 다이얼 SVG에도 해당 눈금이 금색으로 강조 표시된다(`ShadowPuzzleModalOptions.hintAvailable`). 이 플래그를 조사하지 않아도 실시간 겹침 % 피드백만으로 풀이는 가능하지만, 조사하면 정확한 정답 각도를 바로 알 수 있다. 실패 시 이벤트(`candles-flicker` / 3의 배수 실패마다 `threat-approaches`)는 여전히 오디오 전용 분위기 연출이며(Hollow 이동/추격 없음), 5회 실패 시 힌트를 주던 기존 로직은 제거했다(힌트가 이제 상시 월드에 있으므로). 되돌리지 말 것 — 실시간 피드백 없는 순수 커밋-후-피드백 방식으로 되돌리면 Problem 1(맹목적 추측)이 재발한다.
 - 이 항목들은 README의 "다음 확장 우선순위"에 명시된 대로 향후 순차 도입 대상이며, 현재 누락은 버그가 아니다.
 
@@ -76,7 +77,21 @@ Infrastructure ──▶ Application ──▶ Domain
 - 장애물 기반 시야(Line-of-Sight)
 - 정신력 시스템, 애니메이션 State Machine
 - 사운드 에셋 Manifest / spatial audio (`WebAudioPort`는 존재하나 문서 5.5 수준의 레이어링은 없음)
-- GR-2(Ashvale Village)·GR-3(Blackwood Castle) 확장 — 문서 전체 범위 중 이 리포지토리는 GR-1까지만 구현. GR-2/GR-3 착수 시 `config/`에 새 World, `domain/`에 새 Progress 모델을 추가하는 동일 패턴을 따를 것.
+
+## 설계 문서 vs 구현 — GR-2/GR-3 매핑
+
+`logs/12-chapter2-3-level-design-2026-08-16.md`가 GR-2·GR-3의 정본 설계 문서다(LDD의 GR-2/GR-3 명세를 이 코드베이스 문법으로 옮긴 것). GR-2는 `config/Chapter2World.ts`+`domain/Chapter2.ts`+`application/Chapter2FlowService.ts`, GR-3는 `Chapter3World.ts`+`Chapter3.ts`+`Chapter3FlowService.ts`로 GR-1과 동일한 3파일 패턴을 따른다. Area 그래프(1.1/2.1), 시퀀스 비트(1.2/2.2), 와인 선반·네 이름·세 진실 퍼즐(1.3/1.4), 체크포인트(1.6/2.5)는 문서와 1:1로 구현되어 있다.
+
+### GR-2/GR-3 실추격 시스템 (2026-08-16 도입 — GR-1과의 차이점)
+
+설계 문서 1.5/2.3은 GR-1의 무추격 결정을 그대로 계승해 GR-2/GR-3도 전부 `sighting`(스침 후 소멸) 패턴으로 설계했지만, 이후 확인 결과 **GR-2부터는 적이 실제로 플레이어를 추격해야 한다**는 요청을 받아 GR-2/GR-3에 한해 이 결정을 뒤집었다. GR-1의 Hollow(위 GR-1 매핑 섹션 참고)는 영향받지 않는다.
+
+- `domain/Pursuer.ts` — GR-2/GR-3 전용 단일 추격자 엔티티(`active`/`position`/`speed`/`assetId`). GR-1의 `Hollow`와 별개 클래스.
+- `application/PursuitService.ts` — 순수 서비스. 매 프레임 추격자를 플레이어 방향으로 `speed*dt`만큼 이동시키되(축 분리 이동, `MovementService.moveAxis`와 동일한 방식) Area의 `walls`에 막히면 멈춘다. 플레이어와 bounds가 겹치면 포획으로 판정.
+- `AreaDefinition.pursuit`(`domain/World.ts`) — Area별 추격 설정(`enemyAssetId`/`spawn`/`speed`/`catchTitle`/`catchBody`/`onEnter`). `onEnter:true`면 해당 Area에 진입하는 순간 자동 발동(`corridorDescent`/`greatHallSealed`/`innCellarEscape`/`villageChaseFinal`), 없으면 `ActionResult.startPursuit:true`를 반환하는 인터랙션이 발동시킨다(`marketAlley`의 `alley.mirror`).
+- **포획 처리**: `GameController.handleCatch()`가 `catchTitle`/`catchBody` 메시지를 보여준 뒤 플레이어를 현재 Area의 스폰 지점으로 되돌리고, 1.5초 유예(`pursuitGrace`) 후 `onEnter` 추격은 자동 재개된다 — 진행 플래그·아이템은 잃지 않는다(다른 시스템과 동일한 "실패해도 영구 손실 없음" 원칙). Area를 벗어나면(`enterArea()`) 추격은 항상 해제된다.
+- **적용 지점**: `marketAlley`(Hollow, 거울 조우 시), `innCellarEscape`(Maw, 진입 시), `villageChaseFinal`(다중 위협 근사, 진입 시) — GR-2. `corridorDescent`/`greatHallSealed`(Reginald 추격 페이즈 P2/P3, 진입 시) — GR-3. `innCellar`(와인 선반 퍼즐, 이산 클릭 퍼즐이라 실추격을 넣지 않음)와 `office2F`(레지널드 "대면"은 여전히 정지된 스침)는 의도적으로 제외했다.
+- `enemy.maw`는 전용 아트가 없어 `CanvasRenderer.drawPursuer()`의 fallback 사각형으로만 표시된다(플레이스홀더 정책, README "에셋 교체 원칙" 참고) — manifest에 추가되면 자동으로 그림으로 교체된다.
 
 ## 코딩 규칙
 

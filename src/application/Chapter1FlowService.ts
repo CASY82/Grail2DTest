@@ -6,6 +6,8 @@ export interface ActionResult {
   autosave?: boolean;
   openPuzzle?: boolean;
   sighting?: boolean;
+  /** GR-2/GR-3 only — starts the current Area's real pursuit (see AreaDefinition.pursuit). */
+  startPursuit?: boolean;
   complete?: boolean;
 }
 

@@ -9,6 +9,7 @@ export class Player {
   running = false;
   crouching = false;
   noiseRadiusMeters = 0;
+  controlMultiplier = 1;
 
   constructor(position: Vec2) { this.position = { ...position }; }
 

@@ -1,0 +1,4 @@
+const walls = [{ x: 0, y: 0, w: 1280, h: 20 }, { x: 0, y: 700, w: 1280, h: 20 }, { x: 0, y: 0, w: 20, h: 720 }, { x: 1260, y: 0, w: 20, h: 720 }];
+export const interaction = (id, x, y, label, action = id, visibleWhen) => ({ id, rect: { x, y, w: 72, h: 72 }, label, action, ...(visibleWhen ? { visibleWhen } : {}) });
+export const portal = (id, x, y, target, label, requireFlag, spawn) => ({ id, rect: { x, y, w: 70, h: 100 }, target, spawn: spawn ?? { x: x < 640 ? 1160 : 120, y: 600 }, label, ...(requireFlag ? { requireFlag, denyMessage: '아직 이 길을 열 단서를 찾지 못했다.' } : {}) });
+export const room = (id, title, bg, portals, interactions, ambience = 'silence', pursuit) => ({ id, title, subtitle: '비와 침묵 사이', backgroundAssetId: bg, spawn: { x: 120, y: 600 }, walls, portals, interactions, decorations: [], ambience, ...(pursuit ? { pursuit } : {}) });

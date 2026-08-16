@@ -20,6 +20,7 @@ export class CanvasRenderer implements RendererPort {
     this.drawRain(frame);
     this.drawWorld(frame);
     this.drawHollow(frame);
+    this.drawPursuer(frame);
     this.drawPlayer(frame);
     this.drawDarkness(frame);
     this.drawHud(frame);
@@ -76,6 +77,13 @@ export class CanvasRenderer implements RendererPort {
     const c=this.ctx; const h=frame.hollow; const image=this.assets.getImage('enemy.hollow');
     if (image) c.drawImage(image,h.position.x-23,h.position.y-34,46,68);
     else { c.fillStyle='#999b93'; c.fillRect(h.position.x-13,h.position.y-25,26,50); c.fillStyle='#0a0a0a'; c.fillRect(h.position.x-7,h.position.y-18,4,5); c.fillRect(h.position.x+3,h.position.y-18,4,5); }
+  }
+
+  private drawPursuer(frame: RenderFrame): void {
+    if (!frame.pursuer.active) return;
+    const c=this.ctx; const p=frame.pursuer; const image=this.assets.getImage(p.assetId);
+    if (image) c.drawImage(image,p.position.x-p.size.w/2-3,p.position.y-p.size.h/2-8,p.size.w+6,p.size.h+14);
+    else { c.fillStyle='#5c2020'; c.fillRect(p.position.x-p.size.w/2,p.position.y-p.size.h/2,p.size.w,p.size.h); c.fillStyle='#160404'; c.fillRect(p.position.x-6,p.position.y-p.size.h/2+8,4,5); c.fillRect(p.position.x+2,p.position.y-p.size.h/2+8,4,5); }
   }
 
   private drawDarkness(frame: RenderFrame): void {

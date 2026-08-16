@@ -1,10 +1,17 @@
 import { Chapter1Progress, type AreaId, type Chapter1Snapshot, type ItemId } from '../domain/Chapter1.js';
 import { centerOf, distance, rectsOverlap } from '../domain/Geometry.js';
 import { Hollow } from '../domain/Hollow.js';
+import { Pursuer } from '../domain/Pursuer.js';
 import { Player } from '../domain/Player.js';
-import type { InteractionDefinition, PortalDefinition, WorldDefinition } from '../domain/World.js';
+import type { AreaDefinition, InteractionDefinition, PortalDefinition, WorldDefinition } from '../domain/World.js';
 import { Chapter1FlowService } from '../application/Chapter1FlowService.js';
+import { Chapter2FlowService } from '../application/Chapter2FlowService.js';
+import { Chapter3FlowService } from '../application/Chapter3FlowService.js';
+import { Chapter2Progress } from '../domain/Chapter2.js';
+import { Chapter3Progress } from '../domain/Chapter3.js';
+import { RitualSequenceService } from '../application/RitualSequenceService.js';
 import { MovementService } from '../application/MovementService.js';
+import { PursuitService } from '../application/PursuitService.js';
 import { ShadowPuzzleService } from '../application/ShadowPuzzleService.js';
 import { SaveGameService } from '../application/SaveGameService.js';
 import type { AssetProvider, AudioPort, InputPort, ModalPort, RendererPort } from '../application/ports/Ports.js';
@@ -12,30 +19,42 @@ import type { AssetProvider, AudioPort, InputPort, ModalPort, RendererPort } fro
 export class GameController {
   private static readonly SIGHTING_SECONDS=2.4;
   private readonly progress=new Chapter1Progress();
+  private readonly progress2=new Chapter2Progress();
+  private readonly progress3=new Chapter3Progress();
   private readonly player=new Player({x:180,y:520});
   private readonly hollow=new Hollow();
+  private readonly pursuer=new Pursuer();
   private readonly flow=new Chapter1FlowService(this.progress);
+  private readonly flow2=new Chapter2FlowService(this.progress2);
+  private readonly flow3=new Chapter3FlowService(this.progress3);
+  private readonly ritual=new RitualSequenceService();
   private readonly movement=new MovementService();
+  private readonly pursuit=new PursuitService();
   private readonly shadowPuzzle=new ShadowPuzzleService();
   private readonly saves:SaveGameService;
   private areaId:AreaId='bridge';
+  private chapterId:1|2|3=1;
   private previousTime=performance.now();
   private busy=false;
   private portalCooldown=0;
   private sightingTimer=0;
+  private pursuitGrace=0;
   private debug=false;
 
   constructor(
-    private readonly world:WorldDefinition, private readonly input:InputPort, private readonly renderer:RendererPort,
+    private readonly worlds:Record<1|2|3,WorldDefinition>, private readonly input:InputPort, private readonly renderer:RendererPort,
     private readonly assets:AssetProvider, private readonly audio:AudioPort, private readonly modal:ModalPort,
     saveService:SaveGameService
   ){ this.saves=saveService; }
 
   async start():Promise<void>{
     await this.assets.load();
-    const snapshot=this.saves.load(); if(snapshot) this.restore(snapshot);
+    const snapshot=this.saves.load(); this.chapterId=await this.modal.showChapterSelect();
+    this.areaId=this.chapterId===1?'bridge':this.chapterId===2?'villageSquare':'castleGateChain';
+    this.player.position=this.chapterStartPosition(this.chapterId);
+    if(snapshot && (snapshot.chapterId??1)===this.chapterId) this.restore(snapshot);
     this.enterArea(this.areaId,{x:this.player.position.x,y:this.player.position.y},false);
-    await this.modal.showMessage('GRAIL · CHAPTER 1', '2D HTML5 프로토타입. 공격 수단은 없다. 조사하고, 소리를 관리하고, 필요하면 도망쳐라.', 'Enter/E · 시작'); this.input.clearPressed();
+    await this.modal.showMessage(`GRAIL · CHAPTER ${this.chapterId}`, '공격 수단은 없다. 조사하고, 소리를 관리하고, 필요하면 도망쳐라.', 'Enter/E · 시작'); this.input.clearPressed();
     requestAnimationFrame(t=>this.loop(t));
   }
 
@@ -47,6 +66,7 @@ export class GameController {
 
   private update(dt:number):void{
     this.portalCooldown=Math.max(0,this.portalCooldown-dt);
+    this.ritual.update(this.player,dt,this.chapterId===3&&this.progress3.has('boxOpened'));
     if(this.hollow.active){
       this.sightingTimer=Math.max(0,this.sightingTimer-dt);
       if(this.sightingTimer<=0) this.hollow.active=false;
@@ -56,6 +76,13 @@ export class GameController {
     if(state.debugPressed) this.debug=!this.debug;
     if(state.lanternPressed) this.player.lanternOn=!this.player.lanternOn;
     this.movement.update(this.player,this.currentArea(),state,dt);
+    if(this.pursuitGrace>0){
+      this.pursuitGrace=Math.max(0,this.pursuitGrace-dt);
+      const cfg=this.currentArea().pursuit; if(this.pursuitGrace<=0 && cfg?.onEnter) this.activatePursuit(cfg);
+    }
+    if(this.pursuer.active && this.pursuit.update(this.pursuer,this.player,this.currentArea(),dt)){
+      this.busy=true; void this.handleCatch(); return;
+    }
     this.handlePortal();
     if(state.interactPressed) void this.handleInteraction();
   }
@@ -63,25 +90,26 @@ export class GameController {
   private render():void{
     const area=this.currentArea();
     const interaction=this.nearestInteraction(); const portal=this.nearestPortal();
-    const blockedPortalIds=area.portals.filter(p=>p.requireFlag && !this.progress.has(p.requireFlag)).map(p=>p.id);
+    const blockedPortalIds=area.portals.filter(p=>p.requireFlag && !this.activeProgress.has(p.requireFlag)).map(p=>p.id);
     const prompt=interaction?.label ?? (portal ? `${blockedPortalIds.includes(portal.id)?'잠김 · ':''}${portal.label}` : undefined);
     const visibleInteractionIds=area.interactions.filter(i=>this.interactionVisible(i)).map(i=>i.id);
     this.renderer.render({
-      area, player:this.player, hollow:this.hollow, objective:this.progress.objective(),
+      area, player:this.player, hollow:this.hollow, pursuer:this.pursuer, objective:this.activeProgress.objective(),
       ...(prompt ? {prompt} : {}), noiseRadiusMeters:this.player.noiseRadiusMeters, inventoryText:this.inventoryText(), blockedPortalIds, visibleInteractionIds, debug:this.debug
     });
   }
 
   private currentArea(){
-    const base=this.world.areas[this.areaId];
-    if(this.areaId!=='cabinA' || !this.progress.has('gateChecked')) return base;
+    const base=this.worlds[this.chapterId].areas[this.areaId];
+    if(!base) throw new Error(`Area ${this.areaId} is missing from chapter ${this.chapterId}`);
+    if(this.areaId!=='cabinA' || !this.activeProgress.has('gateChecked')) return base;
     return { ...base, backgroundAssetId:'bg.cabinA.visited', subtitle:'재방문 · 젖은 발자국과 열린 관리 기록', decorations:[...base.decorations,{rect:{x:575,y:475,w:130,h:18},fallback:'#151918',alpha:.72},{rect:{x:760,y:330,w:42,h:18},fallback:'#4b3a30',alpha:.8}] };
   }
 
   private handlePortal():void{
     if(this.portalCooldown>0) return;
     const portal=this.currentArea().portals.find(p=>rectsOverlap(this.player.bounds(),p.rect)); if(!portal) return;
-    if(portal.requireFlag && !this.progress.has(portal.requireFlag)){
+    if(portal.requireFlag && !this.activeProgress.has(portal.requireFlag)){
       this.portalCooldown=1.1; this.busy=true;
       void this.modal.showMessage(portal.label,portal.denyMessage ?? '아직 갈 수 없다.').finally(()=>{this.busy=false;}); return;
     }
@@ -97,17 +125,17 @@ export class GameController {
   }
 
   private interactionVisible(i:InteractionDefinition):boolean{
-    if(i.visibleWhen && !this.progress.has(i.visibleWhen)) return false;
-    if(i.hiddenWhen && this.progress.has(i.hiddenWhen)) return false;
+    if(i.visibleWhen && !this.activeProgress.has(i.visibleWhen)) return false;
+    if(i.hiddenWhen && this.activeProgress.has(i.hiddenWhen)) return false;
     const itemByAction:Partial<Record<string,ItemId>>={ 'woodcut.triangle':'woodcutTriangle','woodcut.circle':'woodcutCircle','woodcut.cross':'woodcutCross' };
-    const item=itemByAction[i.action]; if(item && this.progress.owns(item)) return false;
+    const item=itemByAction[i.action]; if(item && this.activeProgress.owns(item)) return false;
     return true;
   }
 
   private async handleInteraction():Promise<void>{
     const interaction=this.nearestInteraction(); if(!interaction) return; this.busy=true;
     try{
-      const result=this.flow.interact(interaction.action); await this.modal.showMessage(result.title,result.body); this.input.clearPressed();
+      const result=this.chapterId===1?this.flow.interact(interaction.action):this.chapterId===2?this.flow2.interact(interaction.action):this.flow3.interact(interaction.action,this.ritual.agencyLocked); await this.modal.showMessage(result.title,result.body); this.input.clearPressed();
       if(result.openPuzzle){
         const solved=await this.modal.showShadowPuzzle({
           align:input=>this.shadowPuzzle.align(input),
@@ -125,42 +153,64 @@ export class GameController {
           await this.modal.showMessage('봉인이 맞물리다','세 그림자가 겹치는 순간, 다락 전체가 숨을 멈춘 듯 조용해진다. 받침대 안쪽에서 나무가 갈리는 소리가 낮게 울린다.');
           this.input.clearPressed();
           await this.modal.showMessage('열린 서랍','서랍이 열린다. 녹슨 관문 열쇠, 경고 쪽지, △ 진실 조각을 획득했다.');
-          this.input.clearPressed(); this.saves.save(this.areaId,this.player,this.progress);
+          this.input.clearPressed(); this.save();
         }
       }
-      if(result.sighting){ this.triggerSighting(); this.saves.save(this.areaId,this.player,this.progress); }
+      if(result.sighting){ this.triggerSighting(); this.save(); }
+      if(result.startPursuit){ const cfg=this.currentArea().pursuit; if(cfg) this.activatePursuit(cfg); this.save(); }
       if(result.complete){
-        this.progress.set('chapterComplete'); this.hollow.active=false; this.enterArea('ending',{x:640,y:360},false); this.saves.save(this.areaId,this.player,this.progress); await this.modal.showEnding(); this.input.clearPressed();
-      } else if(result.autosave) this.saves.save(this.areaId,this.player,this.progress);
+        if(this.chapterId===1)this.progress.set('chapterComplete'); this.hollow.active=false; this.pursuer.active=false; const end=this.chapterId===1?'ending':this.chapterId===2?'ending2':'ending3';this.enterArea(end,{x:640,y:360},false); this.save(); await this.modal.showEnding(this.chapterId); this.input.clearPressed();
+        this.chapterId=await this.modal.showChapterSelect(); this.areaId=this.chapterId===1?'bridge':this.chapterId===2?'villageSquare':'castleGateChain'; this.player.position=this.chapterStartPosition(this.chapterId); this.player.controlMultiplier=1; this.enterArea(this.areaId,this.player.position,false);
+      } else if(result.autosave) this.save();
     }finally{this.busy=false;}
   }
 
   private triggerSighting():void{
-    // Scripted glimpse near the attic window (rect x:900,y:180,w:120,h:130) — Hollow never tracks the player.
+    // Scripted glimpse (GR-1 attic window, or GR-3's brief Reginald reveal) — never tracks the player.
+    this.hollow.assetId=this.chapterId===3?'character.reginald':'enemy.hollow';
     this.hollow.position={x:960,y:230}; this.hollow.active=true; this.sightingTimer=GameController.SIGHTING_SECONDS;
     this.audio.pulse('hollow');
   }
 
+  private activatePursuit(cfg:NonNullable<AreaDefinition['pursuit']>):void{
+    this.pursuer.active=true; this.pursuer.position={...cfg.spawn}; this.pursuer.speed=cfg.speed; this.pursuer.assetId=cfg.enemyAssetId;
+    this.audio.pulse('hollow');
+  }
+
+  private async handleCatch():Promise<void>{
+    const cfg=this.currentArea().pursuit; this.pursuer.active=false;
+    try{
+      await this.modal.showMessage(cfg?.catchTitle??'붙잡히다',cfg?.catchBody??'차가운 손이 스치고 지나간다.');
+      this.input.clearPressed();
+      this.player.position={...this.currentArea().spawn};
+      this.pursuitGrace=1.5;
+    } finally { this.busy=false; }
+  }
+
   private enterArea(target:AreaId,spawn:{x:number;y:number},autosave:boolean):void{
     this.areaId=target; this.player.position={...spawn}; this.audio.setAmbience(this.currentArea().ambience);
-    this.hollow.active=false;
-    if(autosave && ['cabinB1','cabinB2','attic'].includes(target)) this.saves.save(this.areaId,this.player,this.progress);
+    this.hollow.active=false; this.pursuer.active=false; this.pursuitGrace=0;
+    const pursuit=this.currentArea().pursuit; if(pursuit?.onEnter) this.activatePursuit(pursuit);
+    if(autosave && ['cabinB1','cabinB2','attic'].includes(target)) this.save();
   }
 
   private restore(snapshot:Chapter1Snapshot):void{
     this.areaId=snapshot.areaId; this.player.position={x:snapshot.playerX,y:snapshot.playerY}; this.player.lanternOn=snapshot.lanternOn;
-    snapshot.flags.forEach(f=>this.progress.set(f)); snapshot.items.forEach(i=>this.progress.addItem(i));
+    snapshot.flags.forEach(f=>this.activeProgress.set(f)); snapshot.items.forEach(i=>this.activeProgress.addItem(i));
   }
 
   private inventoryText():string{
     const icons:string[]=[];
-    if(this.progress.owns('woodcutTriangle'))icons.push('△'); if(this.progress.owns('woodcutCircle'))icons.push('○'); if(this.progress.owns('woodcutCross'))icons.push('✠');
-    if(this.progress.owns('rustedGateKey'))icons.push('녹슨 열쇠'); if(this.progress.owns('truthTriangle'))icons.push('△ 진실 조각');
+    if(this.activeProgress.owns('woodcutTriangle'))icons.push('△'); if(this.activeProgress.owns('woodcutCircle'))icons.push('○'); if(this.activeProgress.owns('woodcutCross'))icons.push('✠');
+    if(this.activeProgress.owns('rustedGateKey'))icons.push('녹슨 열쇠'); for(const [id,label] of [['truthTriangle','△ 진실 조각'],['truthCircle','○ 진실 조각'],['truthCross','✠ 진실 조각'],['ironGateKey','철 열쇠']] as const)if(this.activeProgress.owns(id))icons.push(label);
     return `소지품: ${icons.length?icons.join(' · '):'없음'}`;
   }
 
   private async pauseInfo():Promise<void>{
     if(this.busy)return; this.busy=true;
-    await this.modal.showMessage('PAUSE',`현재 목표: ${this.progress.objective()}\n저장은 봉헌 촛대 및 핵심 진행 시 자동으로 수행된다.`,'Enter/Escape · 계속'); this.input.clearPressed(); this.busy=false;
+    await this.modal.showMessage('PAUSE',`현재 목표: ${this.activeProgress.objective()}\n저장은 봉헌 촛대 및 핵심 진행 시 자동으로 수행된다.`,'Enter/Escape · 계속'); this.input.clearPressed(); this.busy=false;
   }
+  private get activeProgress(){return this.chapterId===1?this.progress:this.chapterId===2?this.progress2:this.progress3;}
+  private chapterStartPosition(chapter:1|2|3):{x:number;y:number}{return chapter===2?{x:635,y:500}:{x:180,y:520};}
+  private save():void{this.saves.save(this.areaId,this.player,this.activeProgress,this.chapterId);}
 }

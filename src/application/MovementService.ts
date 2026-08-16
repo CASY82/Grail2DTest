@@ -20,7 +20,7 @@ export class MovementService {
     const speed = player.crouching ? MovementService.SPEED.crouch : player.running ? MovementService.SPEED.run : MovementService.SPEED.walk;
     player.noiseRadiusMeters = !player.moving ? MovementService.NOISE_METERS.idle : player.crouching ? MovementService.NOISE_METERS.crouch : player.running ? MovementService.NOISE_METERS.run : MovementService.NOISE_METERS.walk;
 
-    const delta: Vec2 = { x: dx * speed * dt, y: dy * speed * dt };
+    const delta: Vec2 = { x: dx * speed * player.controlMultiplier * dt, y: dy * speed * player.controlMultiplier * dt };
     this.moveAxis(player, area, { x: player.position.x + delta.x, y: player.position.y }, 'x');
     this.moveAxis(player, area, { x: player.position.x, y: player.position.y + delta.y }, 'y');
     player.position.x = clamp(player.position.x, 18, 1262);

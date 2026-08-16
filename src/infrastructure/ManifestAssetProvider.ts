@@ -4,11 +4,12 @@ interface AssetManifest { images: Record<string, string>; }
 
 export class ManifestAssetProvider implements AssetProvider {
   private readonly images = new Map<string, HTMLImageElement>();
+  private readonly refreshToken = Date.now().toString(36);
   constructor(private readonly manifestUrl = './public/assets/manifest.json') {}
 
   async load(): Promise<void> {
     try {
-      const manifest = await (await fetch(this.manifestUrl)).json() as AssetManifest;
+      const manifest = await (await fetch(this.withRefreshToken(this.manifestUrl), { cache:'no-store' })).json() as AssetManifest;
       await Promise.all(Object.entries(manifest.images).map(([id, path]) => this.loadImage(id, path)));
     } catch (error) {
       console.warn('[AssetProvider] Manifest load failed; fallback rendering remains available.', error);
@@ -22,7 +23,11 @@ export class ManifestAssetProvider implements AssetProvider {
       const image = new Image();
       image.onload = () => { this.images.set(id, image); resolve(); };
       image.onerror = () => { console.warn(`[AssetProvider] Missing asset: ${id} -> ${path}`); resolve(); };
-      image.src = path;
+      image.src = this.withRefreshToken(path);
     });
+  }
+
+  private withRefreshToken(path:string):string {
+    return `${path}${path.includes('?')?'&':'?'}refresh=${this.refreshToken}`;
   }
 }

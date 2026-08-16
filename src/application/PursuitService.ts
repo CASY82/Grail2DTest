@@ -1,0 +1,30 @@
+import { rectsOverlap } from '../domain/Geometry.js';
+import type { Rect, Vec2 } from '../domain/Geometry.js';
+import type { Pursuer } from '../domain/Pursuer.js';
+import type { Player } from '../domain/Player.js';
+import type { AreaDefinition } from '../domain/World.js';
+
+/** GR-2/GR-3 only — steers a single Pursuer straight toward the player each frame, blocked by
+ *  the same wall rects the player collides with. Returns true the instant it catches the player. */
+export class PursuitService {
+  update(pursuer: Pursuer, player: Player, area: AreaDefinition, dt: number): boolean {
+    if (!pursuer.active) return false;
+    const dx = player.position.x - pursuer.position.x, dy = player.position.y - pursuer.position.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist > 0.001) {
+      const step = Math.min(dist, pursuer.speed * dt);
+      this.moveAxis(pursuer, area, { x: pursuer.position.x + (dx / dist) * step, y: pursuer.position.y }, 'x');
+      this.moveAxis(pursuer, area, { x: pursuer.position.x, y: pursuer.position.y + (dy / dist) * step }, 'y');
+    }
+    return rectsOverlap(player.bounds(), this.bounds(pursuer));
+  }
+
+  private moveAxis(pursuer: Pursuer, area: AreaDefinition, next: Vec2, axis: 'x' | 'y'): void {
+    if (area.walls.some(w => rectsOverlap(this.bounds(pursuer, next), w))) return;
+    pursuer.position[axis] = next[axis];
+  }
+
+  private bounds(pursuer: Pursuer, at: Vec2 = pursuer.position): Rect {
+    return { x: at.x - pursuer.size.w / 2, y: at.y - pursuer.size.h / 2, w: pursuer.size.w, h: pursuer.size.h };
+  }
+}

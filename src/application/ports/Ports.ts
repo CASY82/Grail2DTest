@@ -1,6 +1,7 @@
 import type { AreaDefinition } from '../../domain/World.js';
 import type { Chapter1Snapshot } from '../../domain/Chapter1.js';
 import type { Hollow } from '../../domain/Hollow.js';
+import type { Pursuer } from '../../domain/Pursuer.js';
 import type { Player } from '../../domain/Player.js';
 import type { ShadowPuzzleAlignment, ShadowPuzzleFeedback, ShadowPuzzleInput } from '../ShadowPuzzleService.js';
 
@@ -18,6 +19,7 @@ export interface RenderFrame {
   area: AreaDefinition;
   player: Player;
   hollow: Hollow;
+  pursuer: Pursuer;
   objective: string;
   prompt?: string;
   message?: string;
@@ -46,8 +48,9 @@ export interface ShadowPuzzleModalOptions {
 }
 
 export interface ModalPort {
+  showChapterSelect(): Promise<1|2|3>;
   showMessage(title: string, body: string, hint?: string): Promise<void>;
   showShadowPuzzle(options: ShadowPuzzleModalOptions): Promise<boolean>;
-  showEnding(): Promise<void>;
+  showEnding(chapter?:1|2|3): Promise<void>;
   isOpen(): boolean;
 }

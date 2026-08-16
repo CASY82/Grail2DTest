@@ -5,6 +5,32 @@ export class ModalView implements ModalPort {
   constructor(private readonly overlay: HTMLElement, private readonly puzzle: HTMLElement) {}
   isOpen(): boolean { return this.open; }
 
+  showChapterSelect():Promise<1|2|3>{
+    this.open=true;this.overlay.classList.remove('hidden');
+    this.overlay.innerHTML='<h1>GRAIL</h1><p>플레이할 챕터를 선택하세요.</p><div class="chapter-select"><button data-ch="1">GR-1 숲</button><button data-ch="2">GR-2 마을</button><button data-ch="3">GR-3 성</button></div><div class="hint">클릭/터치 · 숫자키 1–3 · 방향키 후 Enter</div>';
+    const buttons=[...this.overlay.querySelectorAll<HTMLButtonElement>('[data-ch]')];
+    let selected=0;
+    const focusSelected=()=>{buttons[selected]?.focus();};
+    return new Promise(resolve=>{
+      const choose=(chapter:1|2|3)=>{
+        window.removeEventListener('keydown',onKey);
+        this.overlay.classList.add('hidden');this.open=false;resolve(chapter);
+      };
+      const onKey=(event:KeyboardEvent)=>{
+        if(['Digit1','Digit2','Digit3','Numpad1','Numpad2','Numpad3'].includes(event.code)){
+          event.preventDefault();choose(Number(event.code.at(-1)) as 1|2|3);return;
+        }
+        if(['ArrowLeft','ArrowUp','ArrowRight','ArrowDown'].includes(event.code)){
+          event.preventDefault();selected=(selected+(event.code==='ArrowLeft'||event.code==='ArrowUp'?-1:1)+buttons.length)%buttons.length;focusSelected();
+        }else if(event.code==='Enter'||event.code==='Space'){
+          event.preventDefault();choose((selected+1) as 1|2|3);
+        }
+      };
+      buttons.forEach((button,index)=>button.onclick=()=>choose((index+1) as 1|2|3));
+      window.addEventListener('keydown',onKey);focusSelected();
+    });
+  }
+
   showMessage(title: string, body: string, hint = 'Enter 또는 E를 눌러 계속'): Promise<void> {
     this.open = true; this.overlay.classList.remove('hidden');
     this.overlay.innerHTML = `<h1>${this.escape(title)}</h1><p>${this.escape(body)}</p><div class="hint">${this.escape(hint)}</div>`;
@@ -101,8 +127,9 @@ export class ModalView implements ModalPort {
     return promise;
   }
 
-  async showEnding(): Promise<void> {
-    await this.showMessage('CHAPTER 1 COMPLETE', '녹슨 관문이 열리고, 비에 잠긴 Ashvale 마을과 멀리 Blackwood Castle의 실루엣이 드러난다. CHAPTER 2로 이어진다.', 'Enter를 눌러 엔딩 화면 닫기');
+  async showEnding(chapter:1|2|3=1): Promise<void> {
+    const body=chapter===1?'녹슨 관문 너머 Ashvale 마을이 드러난다.':chapter===2?'마을을 벗어나 Blackwood Castle 안으로 들어선다.':'문이 열렸다. GRAIL의 첫 여정이 끝난다.';
+    await this.showMessage(`CHAPTER ${chapter} COMPLETE`,body,'Enter를 눌러 챕터 선택으로 돌아가기');
   }
 
   private escape(value:string):string { return value.replace(/[&<>'"]/g,ch=>({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;' }[ch] ?? ch)); }

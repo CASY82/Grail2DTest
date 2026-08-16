@@ -1,7 +1,9 @@
 export type AreaId =
   | 'bridge' | 'forest' | 'cabinA' | 'gate' | 'loggingRoad'
   | 'cabinB1Hall' | 'cabinB1Office' | 'cabinB1' | 'cabinB1Rear' | 'cabinB1Cellar'
-  | 'cabinB2' | 'attic' | 'chaseRoad' | 'ending';
+  | 'cabinB2' | 'attic' | 'chaseRoad' | 'ending'
+  | 'villageSquare'|'marketStreet'|'marketAlley'|'houseExterior'|'houseInterior'|'innGroundFloor'|'innCellar'|'innCellarEscape'|'townHallExterior'|'townHallInterior'|'townHallRecords'|'townGate'|'villageChaseFinal'|'ending2'
+  | 'castleGateChain'|'greatHall'|'diningRoom'|'parlor'|'office2F'|'corridorDescent'|'greatHallSealed'|'serviceCorridorB1'|'laboratoryB2'|'ritualChamber'|'ending3';
 
 export type ProgressFlag =
   | 'bridgeObserved' | 'cabinVisited' | 'gateChecked' | 'routeKnown'
@@ -12,11 +14,14 @@ export type ProgressFlag =
   | 'rearBunkSeen' | 'rearWorkbenchSeen' | 'cellarCratesSeen' | 'cellarMarksSeen'
   | 'triangleHintFound' | 'circleHintFound' | 'crossHintFound'
   | 'wingClockDecoySeen' | 'wingBagDecoySeen' | 'wingStatueDecoySeen'
-  | 'b2ClockDecoySeen' | 'officeIconDecoySeen' | 'rearSatchelDecoySeen';
+  | 'b2ClockDecoySeen' | 'officeIconDecoySeen' | 'rearSatchelDecoySeen'
+  | 'villageArrived'|'gateTried'|'blackLambClueKnown'|'hollowSighted'|'hidSuccessfully'|'diaryRead'|'wineHintRead'|'wineOrderSolved'|'ironGateKeyTaken'|'innFireStarted'|'fourNamesKnown'|'truthSlotLit'|'nameSlotSolved'|'chapter2Complete'
+  | 'gateSealed'|'portraitSeen'|'footprintsSeen'|'emberSeen'|'mannequinSeen'|'journalRead'|'reginaldEncountered'|'doorsChorusSeen'|'frontBlockedSeen'|'serviceDoorFound'|'silenceNoted'|'pedestalSeen'|'eleanorConfirmed'|'ritualEntered'|'boxOpened'|'chapter3Complete';
 
-export type ItemId = 'woodcutTriangle' | 'woodcutCircle' | 'woodcutCross' | 'rustedGateKey' | 'truthTriangle';
+export type ItemId = 'woodcutTriangle' | 'woodcutCircle' | 'woodcutCross' | 'rustedGateKey' | 'truthTriangle'|'truthCircle'|'truthCross'|'ironGateKey';
 
 export interface Chapter1Snapshot {
+  chapterId?: 1|2|3;
   areaId: AreaId;
   playerX: number;
   playerY: number;
