@@ -140,7 +140,7 @@ export class CanvasRenderer {
             return;
         const c = this.ctx;
         const h = frame.hollow;
-        const image = this.assets.getImage('enemy.hollow');
+        const image = this.assets.getImage(h.assetId);
         if (image)
             c.drawImage(image, h.position.x - 23, h.position.y - 34, 46, 68);
         else {

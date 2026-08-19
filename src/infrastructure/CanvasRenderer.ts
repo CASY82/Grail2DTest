@@ -74,7 +74,7 @@ export class CanvasRenderer implements RendererPort {
 
   private drawHollow(frame: RenderFrame): void {
     if (!frame.hollow.active) return;
-    const c=this.ctx; const h=frame.hollow; const image=this.assets.getImage('enemy.hollow');
+    const c=this.ctx; const h=frame.hollow; const image=this.assets.getImage(h.assetId);
     if (image) c.drawImage(image,h.position.x-23,h.position.y-34,46,68);
     else { c.fillStyle='#999b93'; c.fillRect(h.position.x-13,h.position.y-25,26,50); c.fillStyle='#0a0a0a'; c.fillRect(h.position.x-7,h.position.y-18,4,5); c.fillRect(h.position.x+3,h.position.y-18,4,5); }
   }

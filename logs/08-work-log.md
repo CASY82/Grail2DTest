@@ -255,3 +255,18 @@ Chapter 1 전체 플레이타임 목표 ~30분에 비해 퍼즐 파트가 너무
 - `PortalDefinition`에 `hiddenWhen`이 없어 GR-3 레지널드 대면 후 상층 포탈 차단은 미구현. 마네킹 텍스트 교체와 `descent.voice`로 대체 표현했다.
 - `manifest.json`의 `bg.chase`는 `chaseRoad` 제거로 미사용 항목이 됐다(제거하지 않고 남겨둠).
 - `Chapter2World.ts`의 x=1200 포탈 rect가 우측 벽과 10px 겹친다(기존 코드, 스모크 미검사 항목).
+
+### 정본 수정 후 누락 이미지 보강
+
+2026-08-20 코드·서사 수정 이후에도 이전 아트가 남아 있던 장면과 전용 이미지가 없던 추격자를 전수 대조해 보강했다.
+
+- `enemy.maw`: 환풍구 추격에서 fallback 사각형으로 보이던 The Maw 전용 top-down RGBA 스프라이트를 신규 제작하고 manifest에 등록했다.
+- `bg.greatHall` v2: 중앙 초상을 레지널드로 정정하고 같은 신발의 왕복 발자국을 체스판 바닥에 추가했다.
+- `bg.parlor` v2: 얼굴 없는 흰 드레스 마네킹을 검은 드레스와 엘리노어의 그려진 얼굴을 가진 마네킹으로 정정했다.
+- `bg.laboratoryB2` v2: 후면에 인간 크기 유리통 열, 중앙 탁자에 반생반사 엘리노어, 우측 빈 받침대를 추가했다.
+- `bg.ritualChamber` v2: 이미 발동된 의식 대신 정지 상태의 엘리노어·빈 받침대·황동 다이얼을 분리 배치해 6비트 인터랙션 순서와 맞췄다.
+- `bg.gr3Ending` v2: 의식 파열, 깨어나는 엘리노어와 유리통 속 존재들, 성 첨탑의 두 그림자를 반영했다.
+- `CanvasRenderer.drawHollow()`가 고정 `enemy.hollow` 대신 `Hollow.assetId`를 사용하도록 수정해 챕터별 sighting 아트 선택이 실제 렌더링에도 반영되게 했다.
+- 모든 배경은 1280×720 RGB PNG, Maw는 176×240 RGBA PNG로 정규화했다.
+- 시각 검수에서 레지널드 초상·왕복 발자국, 검은 드레스/엘리노어 얼굴, 유리통 열·반생반사 엘리노어·빈 받침대, 정지 의식실의 3개 조작 대상, 파열된 의식과 첨탑의 두 그림자를 확인했다.
+- 검증: `npm run check`, `npm run build`, `/mnt/f/Nodejs/node.exe --test tests/`, `/mnt/f/Nodejs/node.exe tests/smoke.mjs` 통과.

@@ -2,6 +2,7 @@
   "images": {
     "character.lucas": "./public/assets/characters/generated/lucas-topdown-v1.png",
     "enemy.hollow": "./public/assets/characters/generated/hollow-topdown-v1.png",
+    "enemy.maw": "./public/assets/characters/generated/maw-topdown-v1.png",
     "bg.bridge": "./public/assets/environment/generated/collapsed-bridge-v1.png",
     "bg.forest": "./public/assets/environment/generated/forest-wolf-eyes-v1.png",
     "bg.cabinA": "./public/assets/environment/generated/cabin-a-first-visit-v1.png",
@@ -32,16 +33,16 @@
     "bg.villageChaseFinal": "./public/assets/environment/generated/village-chase-final-v1.png",
     "bg.gr2Ending": "./public/assets/environment/generated/village-gate-opens-v1.png",
     "bg.castleGateChain": "./public/assets/environment/generated/castle-gate-chain-v1.png",
-    "bg.greatHall": "./public/assets/environment/generated/castle-great-hall-v1.png",
+    "bg.greatHall": "./public/assets/environment/generated/castle-great-hall-v2.png",
     "bg.diningRoom": "./public/assets/environment/generated/castle-dining-room-v1.png",
-    "bg.parlor": "./public/assets/environment/generated/castle-parlor-v1.png",
+    "bg.parlor": "./public/assets/environment/generated/castle-parlor-v2.png",
     "bg.office2F": "./public/assets/environment/generated/castle-office-2f-v1.png",
     "bg.corridorDescent": "./public/assets/environment/generated/castle-spiral-descent-v1.png",
     "bg.greatHallSealed": "./public/assets/environment/generated/castle-great-hall-sealed-v1.png",
     "bg.serviceCorridorB1": "./public/assets/environment/generated/castle-service-corridor-b1-v1.png",
-    "bg.laboratoryB2": "./public/assets/environment/generated/castle-laboratory-b2-v1.png",
-    "bg.ritualChamber": "./public/assets/environment/generated/castle-ritual-chamber-v1.png",
-    "bg.gr3Ending": "./public/assets/environment/generated/castle-ritual-ending-v1.png",
+    "bg.laboratoryB2": "./public/assets/environment/generated/castle-laboratory-b2-v2.png",
+    "bg.ritualChamber": "./public/assets/environment/generated/castle-ritual-chamber-v2.png",
+    "bg.gr3Ending": "./public/assets/environment/generated/castle-ritual-ending-v2.png",
     "character.reginald": "./public/assets/characters/generated/reginald-topdown-v1.png"
   }
 }
