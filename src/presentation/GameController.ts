@@ -18,6 +18,7 @@ import type { AssetProvider, AudioPort, InputPort, ModalPort, RendererPort } fro
 
 export class GameController {
   private static readonly SIGHTING_SECONDS=2.4;
+  static readonly ENDING_AREAS:readonly AreaId[]=['ending','ending2','ending3'];
   private readonly progress=new Chapter1Progress();
   private readonly progress2=new Chapter2Progress();
   private readonly progress3=new Chapter3Progress();
@@ -39,6 +40,8 @@ export class GameController {
   private portalCooldown=0;
   private sightingTimer=0;
   private pursuitGrace=0;
+  private pursuitArea:AreaId|null=null;
+  private cabinRevisitSeen=false;
   private debug=false;
 
   constructor(
@@ -49,13 +52,24 @@ export class GameController {
 
   async start():Promise<void>{
     await this.assets.load();
-    const snapshot=this.saves.load(); this.chapterId=await this.modal.showChapterSelect();
-    this.areaId=this.chapterId===1?'bridge':this.chapterId===2?'villageSquare':'castleGateChain';
-    this.player.position=this.chapterStartPosition(this.chapterId);
+    const snapshot=this.saves.load(); this.beginChapter(await this.modal.showChapterSelect());
     if(snapshot && (snapshot.chapterId??1)===this.chapterId) this.restore(snapshot);
     this.enterArea(this.areaId,{x:this.player.position.x,y:this.player.position.y},false);
-    await this.modal.showMessage(`GRAIL · CHAPTER ${this.chapterId}`, '공격 수단은 없다. 조사하고, 소리를 관리하고, 필요하면 도망쳐라.', 'Enter/E · 시작'); this.input.clearPressed();
+    if(this.chapterId===1) await this.showPrologue();
+    await this.modal.showMessage(`GRAIL · CHAPTER ${this.chapterId}`, '공격 수단은 없다. 조사하고, 소리를 관리하고, 필요하면 도망쳐라.\nF로 등잔을 켤 수 있지만 등잔은 꺼진 채로 시작한다 — 빛은 안전이 아니라 표적이 될 수도 있었다.', 'Enter/E · 시작'); this.input.clearPressed();
     requestAnimationFrame(t=>this.loop(t));
+  }
+
+  private beginChapter(chapter:1|2|3):void{
+    this.chapterId=chapter; this.areaId=this.chapterStartArea(chapter);
+    this.player.position=this.chapterStartPosition(chapter); this.player.controlMultiplier=1;
+    this.activeProgress.addItem('jadeBox');
+  }
+
+  private async showPrologue():Promise<void>{
+    await this.modal.showMessage('문앞의 옥색 돌 상자','\u2018취급 주의!\nAshvale 성의 주인께 이 상자를 무사히 전달해주십시오.\n보수는 귀하가 상상도 못할 정도로 후할 것입니다.\n다른 이에게 보이지 않도록, 그 무엇과도 바꾸지 않도록 하십시오.\n— H.\u2019\n\n운송업을 하고 있는 루카스 베넷은 이 옥색 상자를 오늘 오전 문앞에서 발견했다.','Enter · 계속'); this.input.clearPressed();
+    await this.modal.showMessage('20 노블','“조앤, 이 시간에 무슨일이야”\n“지금이면 집에 있을 줄 알고 왔지~ 좋은 소식을 들고 왔으니까”\n\n조앤이 내민 쪽지에는 이렇게 적혀 있었다.\n\u2018만약 성공적으로 전달한다면 20 노블을 드리도록 하겠습니다.\u2019\n\n“뭐..뭣? 20 노블?”\n장사꾼으로 지내온 25년간 이런 큰 돈을 만져본적이 있었던가 깊이 고민했다.','Enter · 계속'); this.input.clearPressed();
+    await this.modal.showMessage('다음날 새벽','“뭔가 굉장한 일을 떠맡게 된것 같은데, 당신을 믿어”\n\n루카스는 옥색 돌 상자를 옷 품속에 집어 넣으며, 바깥으로 나왔다.\n하지만 Blackmere Wood를 가로지르던 짐마차는 도적들에게 습격당했고, 그의 손은 끝까지 옥색 돌 상자를 움켜쥐고 있었다.\n굵은 기둥이 부러지는 소리와 함께, 다리는 그대로 무너져 내렸다.','Enter · 계속'); this.input.clearPressed();
   }
 
   private loop(now:number):void{
@@ -78,7 +92,7 @@ export class GameController {
     this.movement.update(this.player,this.currentArea(),state,dt);
     if(this.pursuitGrace>0){
       this.pursuitGrace=Math.max(0,this.pursuitGrace-dt);
-      const cfg=this.currentArea().pursuit; if(this.pursuitGrace<=0 && cfg?.onEnter) this.activatePursuit(cfg);
+      const cfg=this.currentArea().pursuit; if(this.pursuitGrace<=0 && cfg && (cfg.onEnter || this.pursuitArea===this.areaId)) this.activatePursuit(cfg);
     }
     if(this.pursuer.active && this.pursuit.update(this.pursuer,this.player,this.currentArea(),dt)){
       this.busy=true; void this.handleCatch(); return;
@@ -103,7 +117,7 @@ export class GameController {
     const base=this.worlds[this.chapterId].areas[this.areaId];
     if(!base) throw new Error(`Area ${this.areaId} is missing from chapter ${this.chapterId}`);
     if(this.areaId!=='cabinA' || !this.activeProgress.has('gateChecked')) return base;
-    return { ...base, backgroundAssetId:'bg.cabinA.visited', subtitle:'재방문 · 젖은 발자국과 열린 관리 기록', decorations:[...base.decorations,{rect:{x:575,y:475,w:130,h:18},fallback:'#151918',alpha:.72},{rect:{x:760,y:330,w:42,h:18},fallback:'#4b3a30',alpha:.8}] };
+    return { ...base, backgroundAssetId:'bg.cabinA.visited', subtitle:'재방문 · 누군가 치우고 간 방', decorations:[...base.decorations,{rect:{x:575,y:475,w:130,h:18},fallback:'#151918',alpha:.72},{rect:{x:760,y:330,w:42,h:18},fallback:'#4b3a30',alpha:.8}] };
   }
 
   private handlePortal():void{
@@ -114,6 +128,10 @@ export class GameController {
       void this.modal.showMessage(portal.label,portal.denyMessage ?? '아직 갈 수 없다.').finally(()=>{this.busy=false;}); return;
     }
     this.enterArea(portal.target,portal.spawn,true); this.portalCooldown=.8;
+    if(this.chapterId===1 && this.areaId==='cabinA' && !this.cabinRevisitSeen && this.activeProgress.has('gateChecked')){
+      this.cabinRevisitSeen=true; this.busy=true;
+      void this.modal.showMessage('낯선 오두막','분명 익숙해야할 오두막이 다시 돌아왔을때는 굉장히 낯설게 느껴졌다.\n\n분명 오두막을 나선 오전까지만 해도 바닥을 뒤덮고 있던 양피지들이 전부 사라져 있었다.\n넘어져 있던 의자와 반쯤 비어 있던 책장도 처음부터 흐트러진 적이 없었던 것처럼 반듯하게 정리되어 있었다.').finally(()=>{this.input.clearPressed();this.busy=false;});
+    }
   }
 
   private nearestPortal():PortalDefinition|undefined{
@@ -133,6 +151,7 @@ export class GameController {
   }
 
   private async handleInteraction():Promise<void>{
+    if(this.busy) return;
     const interaction=this.nearestInteraction(); if(!interaction) return; this.busy=true;
     try{
       const result=this.chapterId===1?this.flow.interact(interaction.action):this.chapterId===2?this.flow2.interact(interaction.action):this.flow3.interact(interaction.action,this.ritual.agencyLocked); await this.modal.showMessage(result.title,result.body); this.input.clearPressed();
@@ -152,15 +171,18 @@ export class GameController {
           this.flow.solvePuzzle(); this.audio.pulse('success');
           await this.modal.showMessage('봉인이 맞물리다','세 그림자가 겹치는 순간, 다락 전체가 숨을 멈춘 듯 조용해진다. 받침대 안쪽에서 나무가 갈리는 소리가 낮게 울린다.');
           this.input.clearPressed();
-          await this.modal.showMessage('열린 서랍','서랍이 열린다. 녹슨 관문 열쇠, 경고 쪽지, △ 진실 조각을 획득했다.');
+          await this.modal.showMessage('열린 서랍','서랍이 열린다. 녹슨 관문 열쇠, 접힌 종이, △ 진실 조각을 획득했다.');
+          this.input.clearPressed();
+          this.progress.addItem('warningNote');
+          await this.modal.showMessage('접힌 종이','\u2018Ashvale의 북쪽 관문에서만 들을 수 있는 울음이 있다.\n그것이 당신보다 먼저 당신을 알아챌 것이다.\n들어가지 말라. 그러나 이미 늦었다면—\n살아남기를.\u2019');
           this.input.clearPressed(); this.save();
         }
       }
       if(result.sighting){ this.triggerSighting(); this.save(); }
       if(result.startPursuit){ const cfg=this.currentArea().pursuit; if(cfg) this.activatePursuit(cfg); this.save(); }
       if(result.complete){
-        if(this.chapterId===1)this.progress.set('chapterComplete'); this.hollow.active=false; this.pursuer.active=false; const end=this.chapterId===1?'ending':this.chapterId===2?'ending2':'ending3';this.enterArea(end,{x:640,y:360},false); this.save(); await this.modal.showEnding(this.chapterId); this.input.clearPressed();
-        this.chapterId=await this.modal.showChapterSelect(); this.areaId=this.chapterId===1?'bridge':this.chapterId===2?'villageSquare':'castleGateChain'; this.player.position=this.chapterStartPosition(this.chapterId); this.player.controlMultiplier=1; this.enterArea(this.areaId,this.player.position,false);
+        if(this.chapterId===1)this.progress.set('chapterComplete'); this.hollow.active=false; this.pursuer.active=false; const end=this.chapterId===1?'ending':this.chapterId===2?'ending2':'ending3';this.enterArea(end,{x:640,y:360},false); await this.modal.showEnding(this.chapterId); this.input.clearPressed();
+        this.beginChapter(await this.modal.showChapterSelect()); this.enterArea(this.areaId,this.player.position,false); this.save();
       } else if(result.autosave) this.save();
     }finally{this.busy=false;}
   }
@@ -173,7 +195,7 @@ export class GameController {
   }
 
   private activatePursuit(cfg:NonNullable<AreaDefinition['pursuit']>):void{
-    this.pursuer.active=true; this.pursuer.position={...cfg.spawn}; this.pursuer.speed=cfg.speed; this.pursuer.assetId=cfg.enemyAssetId;
+    this.pursuer.active=true; this.pursuer.position={...cfg.spawn}; this.pursuer.speed=cfg.speed; this.pursuer.assetId=cfg.enemyAssetId; this.pursuitArea=this.areaId;
     this.audio.pulse('hollow');
   }
 
@@ -189,20 +211,24 @@ export class GameController {
 
   private enterArea(target:AreaId,spawn:{x:number;y:number},autosave:boolean):void{
     this.areaId=target; this.player.position={...spawn}; this.audio.setAmbience(this.currentArea().ambience);
-    this.hollow.active=false; this.pursuer.active=false; this.pursuitGrace=0;
+    this.hollow.active=false; this.pursuer.active=false; this.pursuitGrace=0; this.pursuitArea=null;
     const pursuit=this.currentArea().pursuit; if(pursuit?.onEnter) this.activatePursuit(pursuit);
     if(autosave && ['cabinB1','cabinB2','attic'].includes(target)) this.save();
   }
 
   private restore(snapshot:Chapter1Snapshot):void{
-    this.areaId=snapshot.areaId; this.player.position={x:snapshot.playerX,y:snapshot.playerY}; this.player.lanternOn=snapshot.lanternOn;
+    const stranded=GameController.ENDING_AREAS.includes(snapshot.areaId);
+    this.areaId=stranded?this.chapterStartArea(this.chapterId):snapshot.areaId;
+    this.player.position=stranded?this.chapterStartPosition(this.chapterId):{x:snapshot.playerX,y:snapshot.playerY};
+    this.player.lanternOn=snapshot.lanternOn;
     snapshot.flags.forEach(f=>this.activeProgress.set(f)); snapshot.items.forEach(i=>this.activeProgress.addItem(i));
   }
 
   private inventoryText():string{
     const icons:string[]=[];
+    if(this.activeProgress.owns('jadeBox') && !this.activeProgress.has('boxOpened'))icons.push('옥색 돌 상자');
     if(this.activeProgress.owns('woodcutTriangle'))icons.push('△'); if(this.activeProgress.owns('woodcutCircle'))icons.push('○'); if(this.activeProgress.owns('woodcutCross'))icons.push('✠');
-    if(this.activeProgress.owns('rustedGateKey'))icons.push('녹슨 열쇠'); for(const [id,label] of [['truthTriangle','△ 진실 조각'],['truthCircle','○ 진실 조각'],['truthCross','✠ 진실 조각'],['ironGateKey','철 열쇠']] as const)if(this.activeProgress.owns(id))icons.push(label);
+    if(this.activeProgress.owns('rustedGateKey'))icons.push('녹슨 열쇠'); for(const [id,label] of [['warningNote','경고 쪽지'],['ashvaleMap','Ashvale 지도'],['truthTriangle','△ 진실 조각'],['truthCircle','○ 진실 조각'],['truthCross','✠ 진실 조각'],['ironGateKey','철 열쇠']] as const)if(this.activeProgress.owns(id))icons.push(label);
     return `소지품: ${icons.length?icons.join(' · '):'없음'}`;
   }
 
@@ -211,6 +237,7 @@ export class GameController {
     await this.modal.showMessage('PAUSE',`현재 목표: ${this.activeProgress.objective()}\n저장은 봉헌 촛대 및 핵심 진행 시 자동으로 수행된다.`,'Enter/Escape · 계속'); this.input.clearPressed(); this.busy=false;
   }
   private get activeProgress(){return this.chapterId===1?this.progress:this.chapterId===2?this.progress2:this.progress3;}
+  private chapterStartArea(chapter:1|2|3):AreaId{return chapter===1?'bridge':chapter===2?'villageSquare':'castleGateChain';}
   private chapterStartPosition(chapter:1|2|3):{x:number;y:number}{return chapter===2?{x:635,y:500}:{x:180,y:520};}
   private save():void{this.saves.save(this.areaId,this.player,this.activeProgress,this.chapterId);}
 }

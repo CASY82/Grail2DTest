@@ -1,3 +1,4 @@
+const hold = (title, body) => ({ title, body });
 export class Chapter3FlowService {
     p;
     constructor(p) {
@@ -7,54 +8,84 @@ export class Chapter3FlowService {
         switch (a) {
             case 'gate3.chain':
                 this.p.set('gateSealed');
-                return { title: '당겨진 체인', body: '청동 성문이 등 뒤에서 닫힌다. 되돌아갈 수 없다.', autosave: true };
+                return { title: '당겨진 체인', body: '문틈으로 몸을 밀어 넣고, 안쪽 벽에 걸린 체인을 힘껏 당겼다. 문이 다시 닫혔다.\n\n쿠궁.\n\n바깥에서 무언가가 문에 부딪혔다. 하지만 한 걸음 늦었다.', autosave: true };
+            case 'hall.tapestry': return { title: '블랙우드 가문의 문장', body: '양쪽 벽에는 먼지 쌓인 태피스트리가 걸려 있었다. 사슴, 늑대, 갈까마귀, 그리고 사자. 모두 왕관을 쓰고 있었다. 블랙우드 가문의 문장이었다.' };
             case 'hall.portrait':
                 this.p.set('portraitSeen');
-                return { title: '엘리노어 초상화', body: '눈동자 위의 바니시만 새것처럼 젖어 있다.' };
+                return { title: '레지널드 블랙우드 경', body: '정면 계단 위에는 거대한 초상화가 걸려 있었다. 흰 피부, 검은 머리, 날카로운 눈, 목에 작은 펜던트를 단 남자. 숲 오두막에서 본 작은 그림의 원본이었다.\n명패에는 레지널드 블랙우드 경, 제1대 영주라고 적혀 있었다. 태어난 해는 있었지만, 죽은 해는 없었다.' };
             case 'hall.footprints':
                 this.p.set('footprintsSeen');
-                return { title: '젖은 발자국', body: '성 안쪽으로 향한 흔적만 있고 돌아온 흔적은 없다.' };
+                return { title: '체스판 위의 발자국', body: '흑백 대리석이 체스판처럼 깔린 바닥 위에 발자국이 남아 있었다. 한 줄은 안쪽으로, 다른 한 줄은 다시 돌아온 방향으로. 같은 신발의 흔적이었다.\n누군가 이 성 안을 홀로 걷고 있었다.' };
             case 'hall.candle': return { title: '봉헌 촛대', body: '대현관의 촛불을 밝혔다.', autosave: true };
             case 'dining.embers':
                 this.p.set('emberSeen');
-                return { title: '따뜻한 재', body: '수십 년 비어 있던 벽난로의 재가 아직 따뜻하다.' };
+                return { title: '따뜻한 재', body: '식당 벽난로의 재는 아직 따뜻했다. 루카스는 손을 가까이 대고 바로 뗐다.\n누군가 있다. 지금도 이 성에.' };
+            case 'dining.table': return { title: '오래전에 차려진 식탁', body: '고기는 회색으로 변했고 빵에는 푸른 곰팡이가 피었지만, 잔에는 아직 붉은 와인이 남아 있었다.\n탁자 끝 상석의 의자에는 먼지가 없었다. 누군가 최근까지 앉아 있었다는 뜻이었다.' };
+            case 'dining.painting': return { title: '엘리노어 블랙우드', body: '상석 뒤의 그림에는 금빛 머리의 여자가 미소 짓고 있었다.\n엘리노어 블랙우드.\n루카스는 일기장의 문장을 떠올렸다.\n\n‘그녀가 처음 쓰러졌다.’' };
             case 'parlor.mannequin':
                 this.p.set('mannequinSeen');
-                return { title: '마네킹', body: '고개가 조금 전보다 가까운 쪽을 향한다.' };
+                return { title: '벽난로 앞의 형체', body: '벽난로 앞 높은 의자에 누군가 앉아 있었다. 루카스는 얼어붙었다가 천천히 다가갔다.\n그것은 사람이 아니었다. 검은 드레스를 입힌 나무 마네킹이었다.\n매끄러운 얼굴 위에는 서툰 솜씨로 눈과 코와 입이 그려져 있었다. 식당 그림 속 엘리노어의 얼굴이었다.' };
+            case 'parlor.mannequinTurn':
+                this.p.set('mannequinSeen');
+                return { title: '돌아보는 마네킹', body: '응접실에 다시 내려섰을 때, 벽난로 앞 마네킹이 천천히 고개를 돌리고 있었다.\n루카스는 비명을 삼켰다.' };
+            case 'parlor.piano': return { title: '낡은 피아노', body: '응접실 구석에는 낡은 피아노와 펼쳐진 자장가 악보가 있었다.\n누군가 엘리노어가 흑사병으로 죽은 뒤 십 년 동안 이 마네킹 앞에서 피아노를 쳤을지도 모른다는 생각이 들었다.' };
+            case 'study.scratching': return { title: '이층 복도의 문들', body: '문들은 대부분 닫혀 있었고, 어떤 문 안에서는 희미하게 긁는 소리가 들렸다.\n루카스는 멈추지 않았다.' };
             case 'study.journal':
                 this.p.set('journalRead');
-                return { title: '레지널드의 일지', body: '“엘리노어는 그릇이 아니라 열쇠다.” 마지막 잉크가 아직 마르지 않았다.', autosave: true };
+                return { title: '펼쳐진 일지', body: '‘그가 오고 있다.\n상자를 가지고.\n흑사병이 엘리노어를 앗아간 지 십 년.\n십 년의 기다림이 끝난다.\n엘리노어.\n나는 당신에게 돌아간다.’\n\n마지막 잉크가 아직 마르지 않았다.', autosave: true };
             case 'study.reginald':
                 this.p.set('reginaldEncountered');
-                return { title: '커튼 뒤의 레지널드', body: '“너무 늦었군.” 실루엣이 계단 쪽을 가리킨다.', autosave: true, sighting: true };
+                return { title: '커튼 그림자 속의 레지널드', body: '“네가 왔구나.”\n\n낮고 느린 목소리였다. 창문 옆 커튼 그림자 속에 사람이 서 있었다. 긴 검은 코트와 흰 셔츠, 목의 펜던트, 흰 머리카락. 얼굴은 젊었지만 젊지 않았다. 나이가 사라진 얼굴이었다.\n\n“상자를 가지고 왔느냐.”\n\n루카스는 대답하지 않았다. 그는 그 순간 분명히 알았다. 이 남자는 사람이 아니다.\n레지널드가 한 걸음 다가왔다. 발소리는 나지 않았다.\n\n“두려워하지 마라. 나는 너에게 감사하고 있다.”', autosave: true, sighting: true };
+            case 'descent.voice': return { title: '성 전체가 따라 울리다', body: '등 뒤에서 레지널드의 목소리가 따라왔다.\n\n“도망칠 필요는 없다. 너는 이미 여기에 왔다.”\n\n그 목소리는 크지 않았지만, 성 전체가 그것을 따라 울렸다.' };
             case 'descent.doors':
                 this.p.set('doorsChorusSeen');
-                return { title: '문의 합창', body: '양옆의 문들이 차례로 열리고 회색 손들이 계단을 더듬는다.' };
+                return { title: '열리는 문들', body: '복도 양옆의 닫힌 문들이 하나씩 열리기 시작했다. 문틈 사이로 회색 손과 빈 눈들이 나타났다.\n그들은 서두르지 않았지만 모두 루카스를 향해 움직였다.' };
             case 'sealed.frontDoor':
                 this.p.set('frontBlockedSeen');
-                return { title: '봉쇄된 정문', body: '청록 안개가 문손잡이를 삼킨다.' };
+                return { title: '앞에도, 뒤에도, 양옆에도', body: '대현관의 체스판 위에도 이미 그것들이 있었다. 앞에도, 뒤에도, 양옆에도.\n정문으로 가는 길은 회색 손들에 완전히 막혀 있다.' };
             case 'sealed.serviceDoor':
                 this.p.set('serviceDoorFound');
-                return { title: '숨은 서비스 문', body: '초상화 아래 벽선이 문처럼 갈라진다.' };
+                return { title: '초상화 아래의 작은 문', body: '정면 초상화 아래에 작은 서비스용 문이 보였다. 문 너머에는 좁은 복도와 아래로 이어지는 계단이 있었다.' };
             case 'service.silence':
                 this.p.set('silenceNoted');
-                return { title: '완전한 침묵', body: '발소리조차 뒤늦게 들린다.', autosave: true };
-            case 'lab.pedestal':
-                this.p.set('pedestalSeen');
-                return { title: '빈 받침대', body: '무언가를 기다리는 원형 홈이 있다.' };
+                return { title: '푸른빛의 횃불', body: '지하 복도에는 푸른빛의 횃불이 타고 있었다. 기름의 불이 아니었다. 루카스는 그것이 연금술의 빛이라는 것을 직감했다.\n뒤따르던 발소리는 어느 순간 끊겼다. 그것들이 지하로 내려오지 못하는 것인지, 아니면 이미 그보다 먼저 이곳에 있는 것인지 알 수 없었다.', autosave: true };
+            case 'lab.tubes': return { title: '인간 크기의 유리통들', body: '양옆으로 인간 크기의 유리통들이 줄지어 있었다. 그 안에는 사람들이 떠 있었다.\n아니, 사람이었던 것들이었다. 회색 피부와 빈 눈을 가진 채, 액체 속에서 잠든 듯 떠 있었다.\n몇몇은 아이의 크기였다.\n루카스는 입을 손으로 막았다.' };
+            case 'lab.table': return { title: '돔 천장 아래의 거대한 탁자', body: '복도 끝의 큰 방에 들어선 순간, 루카스는 숨을 잃었다. 그곳은 실험실이었다.\n돔 형태의 천장 아래에 거대한 탁자가 놓여 있었고, 양옆으로 유리통들이 줄지어 있었다.' };
             case 'lab.eleanor':
                 this.p.set('eleanorConfirmed');
-                return { title: '엘리노어의 흔적', body: '유리관 명패의 이름과 초상화의 얼굴이 일치한다.', autosave: true };
+                return { title: '중앙 탁자 위의 여자', body: '중앙 탁자 위에는 여자가 누워 있었다. 금빛 머리와 창백한 얼굴. 엘리노어였다.\n그녀는 살아 있지도, 완전히 죽어 있지도 않았다. 가슴이 아주 천천히 오르내렸고, 감긴 눈꺼풀 밑에서 무언가가 움직이고 있었다.', autosave: true };
+            case 'lab.pedestal':
+                this.p.set('pedestalSeen');
+                return { title: '탁자 옆의 빈 받침대', body: '탁자 옆에는 빈 받침대가 있었다. 유리 돔이 씌워질 작은 받침대.\n루카스는 그것을 보는 순간 알았다. 상자 안의 물건은 이곳에 놓이기 위해 온 것이었다.\n품속의 옥색 상자가 더 차가워졌다. 마치 제자리를 알아본 것처럼.' };
             case 'ritual.approach':
                 this.p.set('ritualEntered');
-                return { title: '삼중 링', body: '생명나무와 뱀십자가 새겨진 장치가 천천히 돈다.', autosave: true };
+                return { title: '의식실', body: '돔 형태의 천장 아래, 빈 받침대가 정지한 장치처럼 놓여 있다. 아무것도 돌지 않고, 아무 소리도 나지 않는다.', autosave: true };
+            case 'ritual.reginald':
+                if (this.p.ritualBeat < 1)
+                    return hold('등 뒤의 어둠', '아직은 아무 소리도 들리지 않는다. 방 안쪽을 먼저 살펴야 한다.');
+                this.p.advanceRitual(2);
+                return { title: '분명한 발소리', body: '등 뒤에서 발소리가 들렸다. 이번에는 분명한 발소리였다.\n루카스가 돌아보자 레지널드가 아치 입구에 서 있었다. 그의 얼굴에는 아까의 미소도, 위협도 없었다. 오직 지독한 피로만이 남아 있었다.\n\n“그것을 이리로.”', sighting: true };
             case 'ritual.kneel':
+                if (this.p.ritualBeat < 2)
+                    return hold('멈춰 선 걸음', '아직 그를 무릎 꿇게 하는 것은 없다. 등 뒤의 발소리를 먼저 확인해야 한다.');
                 this.p.set('boxOpened');
-                return { title: '스스로 열린 상자', body: '옥색 상자가 떨어져 열리고 몸의 힘이 빠져나가기 시작한다.' };
-            case 'ritual.dial': return { title: '저항', body: agencyLocked ? '손잡이는 돌아갔지만 장치는 아무 결과도 받아들이지 않는다.' : '링이 잠시 흔들리지만 곧 제자리로 돌아온다.' };
+                this.p.advanceRitual(3);
+                return { title: '스스로 열린 상자', body: '루카스의 다리가 무너졌다. 그는 무릎을 꿇었고, 손에서 옥색 상자가 미끄러졌다.\n상자는 돌바닥에 떨어졌지만 부서지지 않았다. 대신 저절로 열렸다. 안에서 창백한 청록색 빛이 흘러나왔다. 바다보다 오래되고 별보다 낯선 빛이었다.\n그 안에는 작은 유리병이 있었다. 액체가 살아 있는 것처럼 천천히 움직이고 있었다.\n\n“Grail…”', autosave: true };
+            case 'ritual.pedestal':
+                if (this.p.ritualBeat < 3)
+                    return hold('빈 받침대', '받침대는 아직 비어 있다.');
+                this.p.advanceRitual(4);
+                return { title: '받침대에 안치되다', body: '레지널드는 그것을 두 손으로 들어 올렸다. 갓난아이를 안는 사람처럼 조심스러웠다. 그의 창백한 얼굴에 처음으로 인간다운 감정이 떠올랐다. 그것은 울음에 가까웠다. 눈물은 흐르지 않았지만, 그의 얼굴은 울고 있었다.\n\n“십 년을 기다렸다.”\n\n그가 속삭였다.\n레지널드는 유리병을 받침대에 올려놓았다. 받침대가 푸른빛을 빨아들이자 돔 천장에 연금술의 문양들이 떠올랐다. 생명의 나무, 뱀이 감긴 십자, 알 수 없는 원들이 서로 맞물려 돌았다.\n탁자 위의 엘리노어가 천천히 숨을 들이쉬었다. 그녀의 손가락이 한 번 움직였다.', autosave: true };
+            case 'ritual.dial':
+                if (this.p.ritualBeat < 4)
+                    return hold('아직 이른 저항', '받침대 위에서 아무 일도 벌어지지 않았다.');
+                this.p.advanceRitual(5);
+                return { title: '움직이지 않는 몸', body: `${agencyLocked ? '루카스는 일어서려 했지만 몸이 움직이지 않았다. 방의 공기 자체가 그의 힘을 빨아들이고 있었다.\n그는 유리통 속의 것들을 보았다. 이 방에 들어온 모든 것이 결국 저렇게 되는 것 같았다.' : '루카스는 팔에 힘을 주었다. 손끝이 돌바닥을 조금 긁었을 뿐, 몸은 끝내 일어서지 못했다.'}\n\n루카스의 시야가 흐려졌다. 멀리서 레지널드의 목소리가 들렸다.\n\n“너는 나에게 나의 아내를 돌려주었다. 그러니 너도 여기에 남을 것이다.”\n\n그 말이 끝나기도 전에, 바닥의 문양 하나가 루카스의 발밑까지 번졌다. 푸른빛은 물처럼 흘러 그의 손목을 감고, 목을 감고, 가슴 안쪽으로 파고들었다.\n루카스는 비명을 지르려 했지만 목소리가 나오지 않았다. 목구멍 깊은 곳에서 낯선 숨소리만 새어 나왔다.\n\n쉬이—\n\n그것은 그의 숨이 아니었다.\n\n루카스는 빗소리를 들었다. 집으로 돌아가는 길이 떠올랐다. 딸의 웃음소리, 아내의 손의 온기, 식탁 위에 놓인 딱딱한 빵 한 조각. 그리고 20 노블.\n그는 아주 작게 웃으려 했다.\n\n“그깟 20 노블이…”\n\n하지만 입술은 제대로 움직이지 않았다. 대신 턱 아래의 근육이 기묘하게 떨렸다.\n손가락 끝에서 감각이 사라지고, 손톱 밑으로 검푸른 선이 번졌다. 뼈가 안쪽에서 천천히 방향을 바꾸는 듯한 통증이 밀려왔다.\n\n루카스는 마지막 힘으로 레지널드를 보았다. 레지널드는 더 이상 그를 보고 있지 않았다. 그의 시선은 오직 탁자 위의 엘리노어에게 고정되어 있었다.` };
             case 'ritual.witness':
+                if (this.p.ritualBeat < 5)
+                    return hold('탁자 위의 여자', '그녀는 아직 눈을 뜨지 않았다.');
                 this.p.set('chapter3Complete');
-                return { title: '열린 문', body: '암전 직전 레지널드의 목소리가 들린다. “문이 열렸군요.”', complete: true };
+                return { title: '문이 열렸군요', body: '엘리노어가 눈을 떴다.\n레지널드는 숨을 삼켰다. 그는 떨리는 손으로 그녀의 손을 잡고, 그 차가운 손등에 입을 맞추었다.\n\n“엘리노어.”\n\n그러나 엘리노어의 눈동자는 그를 향하지 않았다. 검게 비어 있는 듯한 눈은 천천히 움직여, 바닥에 쓰러진 루카스를 바라보았다. 아니, 루카스 안쪽에서 아직 꺼지지 않은 무언가를 바라보았다.\n그녀의 입술이 벌어졌다. 목소리는 엘리노어의 것도, 레지널드가 기억하던 여인의 것도 아니었다. 오래 닫혀 있던 문틈에서 흘러나오는 바람 같았다.\n\n“문이 열렸군요.”\n\n레지널드의 얼굴에서 기쁨이 아주 잠깐 흔들렸다. 그러나 그는 곧 그 흔들림을 지웠다. 그는 자신이 들은 말을 부정하듯 엘리노어의 손을 더 세게 움켜쥐었다.\n\n“당신이 돌아온 거야.”', complete: true };
             default: return { title: '조사', body: 'Blackwood의 오래된 침묵이 내려앉아 있다.' };
         }
     }

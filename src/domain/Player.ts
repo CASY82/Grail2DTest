@@ -4,7 +4,7 @@ export class Player {
   position: Vec2;
   readonly size = { w: 28, h: 36 };
   facing: Vec2 = { x: 0, y: 1 };
-  lanternOn = true;
+  lanternOn = false;
   moving = false;
   running = false;
   crouching = false;

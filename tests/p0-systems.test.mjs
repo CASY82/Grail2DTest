@@ -120,8 +120,8 @@ test('management building spine and optional branches preserve the three-room pu
   assert.equal(chapter1World.areas.cabinB1Rear.portals.find(p=>p.id==='rear.toB2')?.target,'cabinB2');
   assert.equal(chapter1World.areas.cabinB1Rear.portals.find(p=>p.id==='rear.toCellar')?.target,'cabinB1Cellar');
   const woodcuts=[
-    ['cabinB2','wood.tri','triangleHintFound'],
-    ['cabinB1Rear','wood.circle','circleHintFound'],
+    ['cabinB1','wood.tri','triangleHintFound'],
+    ['cabinB1','wood.circle','circleHintFound'],
     ['cabinB1','wood.cross','crossHintFound']
   ];
   for(const [areaId,id,flag] of woodcuts){
@@ -131,8 +131,8 @@ test('management building spine and optional branches preserve the three-room pu
 
 test('woodcut search uses one discoverable hint before each hidden trigger',()=>{
   const chains=[
-    ['cabinB2','b2.watchHint','triangleHintFound','wood.tri'],
-    ['cabinB1Rear','rear.mildewHint','circleHintFound','wood.circle'],
+    ['cabinB1','b1.watchHint','triangleHintFound','wood.tri'],
+    ['cabinB1','rear.mildewHint','circleHintFound','wood.circle'],
     ['cabinB1','wing.waxHint','crossHintFound','wood.cross']
   ];
   for(const [areaId,hintId,flag,woodcutId] of chains){
@@ -174,12 +174,20 @@ test('historically revised puzzle rooms use versioned art while superseded art s
   assert.match(manifest.images['bg.cabinB2'],/cabin-b2-v3\.png$/);
 });
 
-test('1358 puzzle props avoid portable mechanical clocks and circular saw terminology',()=>{
+// 2026-08-20: 마스터 시나리오(1순위 정본) 621~622행이 '벽난로 위의 멈춰 버린 회중시계'를 명시하고,
+// 근거였던 '1358년' 설정은 시나리오·LDD 어디에도 없어 모래시계 치환을 원복했다.
+// 이 테스트는 그 역방향(모래시계 재도입)을 막는다.
+test('triangle woodcut chain keeps the master-scenario pocket watch on the mantel',()=>{
   const relevant=['wing.clockDecoy','b2.watchHint','b2.clockDecoy','woodcut.triangle','rear.workbench'];
   const source=fs.readFileSync(new URL('../dist/application/Chapter1FlowService.js',import.meta.url),'utf8');
-  for(const forbidden of ['손목시계','회중시계','탁상시계','원형 톱']) assert.ok(!source.includes(forbidden),`${forbidden} must not survive in runtime copy`);
-  for(const action of relevant) assert.ok(source.includes(`case '${action}'`),`${action} must remain implemented after terminology revision`);
-  assert.equal(chapter1World.areas.cabinB2.interactions.find(i=>i.id==='wood.tri')?.label,'멈춘 모래시계');
+  for(const action of relevant) assert.ok(source.includes(`case '${action}'`),`${action} must remain implemented`);
+  assert.ok(!source.includes('모래시계'),'모래시계 must not return — master scenario 621행 says 회중시계');
+  assert.ok(source.includes('회중시계'),'회중시계 must appear in runtime copy');
+  assert.ok(source.includes('벽난로'),'벽난로 위라는 배치(원문 621행)가 본문에 남아 있어야 한다');
+  const tri=chapter1World.areas.cabinB1.interactions.find(i=>i.id==='wood.tri');
+  const hint=chapter1World.areas.cabinB1.interactions.find(i=>i.id==='b1.watchHint');
+  assert.ok(tri && hint,'triangle woodcut and its hint both belong to the 1F three-room wing');
+  assert.match(hint.label,/회중시계/);
   assert.equal(chapter1World.areas.cabinB1Rear.interactions.find(i=>i.id==='rear.workbench')?.label,'틀톱 정리대');
 });
 

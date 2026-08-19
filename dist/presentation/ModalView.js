@@ -45,7 +45,7 @@ export class ModalView {
     showMessage(title, body, hint = 'Enter 또는 E를 눌러 계속') {
         this.open = true;
         this.overlay.classList.remove('hidden');
-        this.overlay.innerHTML = `<h1>${this.escape(title)}</h1><p>${this.escape(body)}</p><div class="hint">${this.escape(hint)}</div>`;
+        this.overlay.innerHTML = `<h1>${this.escape(title)}</h1><p>${this.escape(body).replace(/\n/g, '<br>')}</p><div class="hint">${this.escape(hint)}</div>`;
         return new Promise(resolve => {
             const close = (e) => {
                 if (!['Enter', 'KeyE', 'Escape', 'Space'].includes(e.code))
@@ -157,8 +157,16 @@ export class ModalView {
         return promise;
     }
     async showEnding(chapter = 1) {
-        const body = chapter === 1 ? '녹슨 관문 너머 Ashvale 마을이 드러난다.' : chapter === 2 ? '마을을 벗어나 Blackwood Castle 안으로 들어선다.' : '문이 열렸다. GRAIL의 첫 여정이 끝난다.';
+        if (chapter === 3) {
+            await this.showFinalEnding();
+            return;
+        }
+        const body = chapter === 1 ? '녹슨 관문 너머 Ashvale 마을이 드러난다.' : '마을을 벗어나 Blackwood Castle 안으로 들어선다.';
         await this.showMessage(`CHAPTER ${chapter} COMPLETE`, body, 'Enter를 눌러 챕터 선택으로 돌아가기');
+    }
+    async showFinalEnding() {
+        await this.showMessage('시야가 검게 닫히다', '루카스는 그 말을 끝까지 듣지 못했다. 그의 시야는 검게 닫혔다.\n하지만 의식이 사라진 뒤에도 몸은 완전히 멈추지 않았다.\n어깨가 한 번 뒤틀렸다. 손가락이 돌바닥을 긁었다.\n인간의 손톱으로는 낼 수 없는 소리가 실험실 바닥에 길게 남았다.', 'Enter · 계속');
+        await this.showMessage('GRAIL · END', '유리통 속의 것들이 하나둘 눈을 떴다. 빈 눈들이 루카스를 향했다.\n기다리는 눈들이었다. 마치 그가 이제 자신들 중 하나가 되기를 알고 있었다는 듯이.\n연금술의 푸른빛이 실험실을 가득 채웠고, 오래 잠들어 있던 성 전체가 천천히 깨어나기 시작했다.\n\n안개가 다시 마을을 덮었다. 성의 첨탑에서는 십 년 만에 창 하나가 환하게 켜졌다.\n그 창의 안쪽에서 두 사람의 그림자가 서로를 마주 보고 있었다.\n하나는 레지널드였다. 그리고 다른 하나는, 엘리노어의 모습을 하고 있었다.', 'Enter를 눌러 챕터 선택으로 돌아가기');
     }
     escape(value) { return value.replace(/[&<>'"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[ch] ?? ch)); }
 }

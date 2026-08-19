@@ -2,7 +2,7 @@ export class Player {
     position;
     size = { w: 28, h: 36 };
     facing = { x: 0, y: 1 };
-    lanternOn = true;
+    lanternOn = false;
     moving = false;
     running = false;
     crouching = false;
